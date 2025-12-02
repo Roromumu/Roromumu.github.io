@@ -1042,10 +1042,74 @@
                 return b.avgReward - a.avgReward;
             });
 
+            // 應用歷史學習優化
+            results = applyHistoricalLearning(results);
+
             displayResults(results, availableNumbers);
             
             // 儲存當前推薦的最佳線供記錄使用
             currentRecommendedLine = results[0];
+        }
+
+        function applyHistoricalLearning(results) {
+            if (gameHistory.length < 5) {
+                // 數據不足，使用原始推薦
+                return results;
+            }
+
+            // 分析歷史表現
+            const linePerformance = {};
+            
+            gameHistory.forEach(record => {
+                if (!record.allLines) return;
+                
+                record.allLines.forEach(line => {
+                    if (!linePerformance[line.name]) {
+                        linePerformance[line.name] = {
+                            totalReward: 0,
+                            count: 0,
+                            selectedCount: 0,
+                            selectedReward: 0,
+                            wasOptimalCount: 0
+                        };
+                    }
+                    
+                    linePerformance[line.name].totalReward += line.reward;
+                    linePerformance[line.name].count++;
+                    
+                    if (line.name === record.selectedLine) {
+                        linePerformance[line.name].selectedCount++;
+                        linePerformance[line.name].selectedReward += record.actualReward;
+                    }
+                    
+                    if (line.name === record.actualBestLine) {
+                        linePerformance[line.name].wasOptimalCount++;
+                    }
+                });
+            });
+
+            // 根據歷史調整評分
+            results.forEach(result => {
+                const perf = linePerformance[result.name];
+                if (perf && perf.count > 0) {
+                    // 計算歷史平均獎勵
+                    const historicalAvg = perf.totalReward / perf.count;
+                    
+                    // 計算這條線作為最佳線的頻率
+                    const optimalRate = perf.wasOptimalCount / perf.count;
+                    
+                    // 如果玩家選擇這條線時表現好
+                    const userSuccessRate = perf.selectedCount > 0 ? 
+                        perf.selectedReward / perf.selectedCount / historicalAvg : 1;
+                    
+                    // 調整分數 (保留原始avgReward，加入歷史加權)
+                    result.historicalScore = result.avgReward * (1 + optimalRate * 0.2);
+                    result.historicalOptimalRate = optimalRate;
+                    result.userFamiliarity = perf.selectedCount;
+                }
+            });
+
+            return results;
         }
 
         // 頁面載入時顯示初始推薦
@@ -1410,28 +1474,89 @@
             
             let html = '<div class="result-title">📊 詳細分析結果</div>';
             
-            // 總覽區域
-            html += '<div class="summary-section">';
-            html += '<div class="summary-title">🎯 整體統計</div>';
-            html += '<div class="summary-grid">';
-            html += `<div class="summary-card">
-                <div class="summary-label">最佳選擇</div>
-                <div class="summary-value">${bestResult.name}</div>
-            </div>`;
-            html += `<div class="summary-card">
-                <div class="summary-label">期望獎勵</div>
-                <div class="summary-value">${bestResult.avgReward.toLocaleString()}</div>
-            </div>`;
-            html += `<div class="summary-card">
-                <div class="summary-label">已確定線數</div>
-                <div class="summary-value">${confirmedLines.length}/8</div>
-            </div>`;
-            html += `<div class="summary-card">
-                <div class="summary-label">剩餘數字</div>
-                <div class="summary-value">${availableNumbers.join(', ')}</div>
-            </div>`;
-            html += '</div></div>';
-
+            // === 多重推薦策略區域 ===
+            if (uncertainLines.length > 0) {
+                html += '<div class="summary-section" style="background: #e8f8f0; border: 2px solid #2ecc71;">';
+                html += '<div class="summary-title" style="color: #2ecc71;">🎯 智能多重推薦</div>';
+                
+                // 找出不同策略的推薦
+                const strategies = calculateStrategies(uncertainLines);
+                
+                html += '<div style="display: grid; gap: 15px;">';
+                
+                // 策略1: 平衡策略 (中位數最高)
+                html += `
+                    <div style="background: white; padding: 15px; border-radius: 10px; border-left: 4px solid #3498db;">
+                        <div style="font-weight: bold; color: #3498db; margin-bottom: 8px;">
+                            ⚖️ 平衡策略 (推薦)
+                        </div>
+                        <div style="font-size: 14px; color: #666; margin-bottom: 5px;">
+                            ${strategies.balanced.name} - 中位數獎勵最穩定
+                        </div>
+                        <div style="font-size: 13px; color: #888;">
+                            中位數: ${strategies.balanced.medianReward.toLocaleString()} MGP | 
+                            平均: ${strategies.balanced.avgReward.toLocaleString()} MGP | 
+                            高獎機率: ${(strategies.balanced.highRewardProb * 100).toFixed(0)}%
+                        </div>
+                    </div>
+                `;
+                
+                // 策略2: 保守策略 (最低獎勵最高)
+                html += `
+                    <div style="background: white; padding: 15px; border-radius: 10px; border-left: 4px solid #27ae60;">
+                        <div style="font-weight: bold; color: #27ae60; margin-bottom: 8px;">
+                            🛡️ 保守策略 (求穩)
+                        </div>
+                        <div style="font-size: 14px; color: #666; margin-bottom: 5px;">
+                            ${strategies.conservative.name} - 保證最低獎勵最高
+                        </div>
+                        <div style="font-size: 13px; color: #888;">
+                            保底: ${strategies.conservative.minReward.toLocaleString()} MGP | 
+                            平均: ${strategies.conservative.avgReward.toLocaleString()} MGP | 
+                            最高: ${strategies.conservative.maxReward.toLocaleString()} MGP
+                        </div>
+                    </div>
+                `;
+                
+                // 策略3: 激進策略 (最高獎勵最高或高獎機率最高)
+                html += `
+                    <div style="background: white; padding: 15px; border-radius: 10px; border-left: 4px solid #e74c3c;">
+                        <div style="font-weight: bold; color: #e74c3c; margin-bottom: 8px;">
+                            🚀 激進策略 (博大獎)
+                        </div>
+                        <div style="font-size: 14px; color: #666; margin-bottom: 5px;">
+                            ${strategies.aggressive.name} - 高獎勵機率最高
+                        </div>
+                        <div style="font-size: 13px; color: #888;">
+                            最高可能: ${strategies.aggressive.maxReward.toLocaleString()} MGP | 
+                            高獎機率: ${(strategies.aggressive.highRewardProb * 100).toFixed(0)}% | 
+                            平均: ${strategies.aggressive.avgReward.toLocaleString()} MGP
+                        </div>
+                    </div>
+                `;
+                
+                // 策略4: 歷史學習推薦 (如果有足夠數據)
+                if (gameHistory.length >= 5 && strategies.learned) {
+                    html += `
+                        <div style="background: white; padding: 15px; border-radius: 10px; border-left: 4px solid #9b59b6;">
+                            <div style="font-weight: bold; color: #9b59b6; margin-bottom: 8px;">
+                                🧠 AI學習推薦 (基於${gameHistory.length}局數據)
+                            </div>
+                            <div style="font-size: 14px; color: #666; margin-bottom: 5px;">
+                                ${strategies.learned.name} - ${strategies.learned.reason}
+                            </div>
+                            <div style="font-size: 13px; color: #888;">
+                                歷史最佳率: ${(strategies.learned.historicalOptimalRate * 100).toFixed(0)}% | 
+                                平均: ${strategies.learned.avgReward.toLocaleString()} MGP
+                                ${strategies.learned.userFamiliarity > 0 ? ` | 你選過${strategies.learned.userFamiliarity}次` : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                html += '</div></div>';
+            }
+            
             // 各線詳細分析
             results.forEach((result, index) => {
                 const isBest = index === 0;
@@ -1450,11 +1575,10 @@
                     `${result.reward.toLocaleString()} MGP` : 
                     `${result.avgReward.toLocaleString()} MGP`;
 
-                const badgeHtml = isBest ? '<span class="badge badge-best">★ 最推薦</span>' : 
-                                 isConfirmed ? '<span class="badge badge-confirmed">✓ 確定</span>' : '';
+                const badgeHtml = isConfirmed ? '<span class="badge badge-confirmed">✓ 確定</span>' : '';
 
                 html += `
-                    <div class="line-result ${isBest ? 'best' : ''} ${isConfirmed ? 'confirmed' : ''}">
+                    <div class="line-result ${isConfirmed ? 'confirmed' : ''}">
                         <div class="line-name">${result.name}${badgeHtml}</div>
                         <div class="line-details">${detailsStr}</div>
                         <div class="line-reward">期望值: ${rewardStr}</div>
@@ -1499,6 +1623,14 @@
                         <span class="stat-label">高獎勵機率 (≥1000):</span>
                         <span class="stat-value">${highRewardPercent}%</span>
                     </div>`;
+                    
+                    // 歷史學習信息
+                    if (result.historicalOptimalRate !== undefined) {
+                        html += `<div class="stat-row">
+                            <span class="stat-label">歷史最佳率:</span>
+                            <span class="stat-value" style="color: #9b59b6;">${(result.historicalOptimalRate * 100).toFixed(0)}%</span>
+                        </div>`;
+                    }
                     
                     // 機率條
                     html += `<div class="probability-bar">
@@ -1583,6 +1715,50 @@
             if (gameHistory.length > 0) {
                 document.getElementById('historySection').classList.add('show');
             }
+        }
+
+        function calculateStrategies(uncertainLines) {
+            // 平衡策略：中位數最高
+            const balanced = [...uncertainLines].sort((a, b) => 
+                b.medianReward - a.medianReward
+            )[0];
+
+            // 保守策略：最低獎勵最高
+            const conservative = [...uncertainLines].sort((a, b) => 
+                b.minReward - a.minReward
+            )[0];
+
+            // 激進策略：高獎勵機率最高
+            const aggressive = [...uncertainLines].sort((a, b) => 
+                b.highRewardProb - a.highRewardProb
+            )[0];
+
+            const strategies = {
+                balanced: balanced,
+                conservative: conservative,
+                aggressive: aggressive
+            };
+
+            // AI學習推薦（如果有足夠歷史數據）
+            if (gameHistory.length >= 5) {
+                const learned = [...uncertainLines]
+                    .filter(line => line.historicalOptimalRate !== undefined)
+                    .sort((a, b) => {
+                        // 綜合評分：歷史表現 + 期望值
+                        const scoreA = (a.historicalScore || a.avgReward);
+                        const scoreB = (b.historicalScore || b.avgReward);
+                        return scoreB - scoreA;
+                    })[0];
+
+                if (learned && learned.historicalOptimalRate > 0) {
+                    learned.reason = learned.historicalOptimalRate >= 0.4 ? 
+                        '此線歷史表現優異' : 
+                        '綜合評估最佳選擇';
+                    strategies.learned = learned;
+                }
+            }
+
+            return strategies;
         }
 
         function enableFillMode() {
