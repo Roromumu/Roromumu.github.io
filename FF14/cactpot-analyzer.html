@@ -91,6 +91,99 @@
             animation: pulse 1.5s infinite;
         }
 
+        .cell.strategy-balanced {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-color: #3498db;
+            box-shadow: 0 0 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .cell.strategy-conservative {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border-color: #27ae60;
+            box-shadow: 0 0 15px rgba(39, 174, 96, 0.3);
+        }
+
+        .cell.strategy-aggressive {
+            background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+            border-color: #e74c3c;
+            box-shadow: 0 0 15px rgba(231, 76, 60, 0.3);
+        }
+
+        .cell.strategy-learned {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+            border-color: #9b59b6;
+            box-shadow: 0 0 15px rgba(155, 89, 182, 0.3);
+        }
+
+        .cell.strategy-multiple {
+            background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%);
+            border-color: #f39c12;
+            box-shadow: 0 0 15px rgba(243, 156, 18, 0.5);
+            position: relative;
+        }
+
+        .cell.strategy-multiple::after {
+            content: '★';
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            font-size: 12px;
+            color: #f39c12;
+        }
+
+        .strategy-legend {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            background: white;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 5px;
+            border: 2px solid;
+        }
+
+        .legend-color.balanced {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-color: #3498db;
+        }
+
+        .legend-color.conservative {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border-color: #27ae60;
+        }
+
+        .legend-color.aggressive {
+            background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+            border-color: #e74c3c;
+        }
+
+        .legend-color.learned {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+            border-color: #9b59b6;
+        }
+
+        .legend-color.multiple {
+            background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%);
+            border-color: #f39c12;
+        }
+
         @keyframes pulse {
             0%, 100% {
                 box-shadow: 0 0 20px rgba(243, 156, 18, 0.5);
@@ -592,6 +685,421 @@
             position: absolute;
             left: 0;
         }
+
+        .stats-analysis-section {
+            background: #f0f4ff;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .stats-analysis-section.show {
+            display: block;
+        }
+
+        .stats-tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .stats-tab-btn {
+            padding: 10px 20px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .stats-tab-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .stats-tab-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .stats-content {
+            display: none;
+        }
+
+        .stats-content.active {
+            display: block;
+        }
+
+        .heatmap-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-width: 400px;
+            margin: 20px auto;
+        }
+
+        .heatmap-cell {
+            aspect-ratio: 1;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            padding: 5px;
+        }
+
+        .heatmap-cell-number {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .heatmap-cell-freq {
+            font-size: 11px;
+            color: #666;
+        }
+
+        .frequency-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 13px;
+        }
+
+        .frequency-table th,
+        .frequency-table td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        .frequency-table th {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+
+        .frequency-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .deviation-indicator {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .deviation-high {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .deviation-low {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .deviation-normal {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .pattern-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .pattern-title {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .pattern-detail {
+            color: #666;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .confidence-meter {
+            margin-top: 10px;
+            height: 25px;
+            background: #e0e0e0;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #f44336, #ff9800, #4caf50);
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .ml-model-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid #667eea;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .ml-model-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .ml-model-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .ml-model-status {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .ml-status-ready {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .ml-status-training {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .ml-status-insufficient {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .ml-metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            margin: 5px 0;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .ml-metric-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .ml-metric-value {
+            font-weight: bold;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .ml-prediction-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 15px 0;
+        }
+
+        .ml-prediction-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .ml-prediction-line {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        .ml-prediction-confidence {
+            text-align: center;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .decision-tree {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 12px;
+            overflow-x: auto;
+        }
+
+        .tree-node {
+            margin: 5px 0;
+            padding-left: 20px;
+            border-left: 2px solid #667eea;
+        }
+
+        .tree-leaf {
+            color: #2e7d32;
+            font-weight: bold;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
+        .gist-dialog {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .gist-dialog.show {
+            display: flex;
+        }
+
+        .gist-dialog-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .gist-dialog-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .gist-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            font-size: 14px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+
+        .gist-input:focus {
+            outline: none;
+            border-color: #5568d3;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+        }
+
+        .gist-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .gist-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .gist-btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .gist-btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .gist-btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .gist-btn-secondary:hover {
+            background: #7f8c8d;
+        }
+
+        .gist-help {
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            line-height: 1.6;
+        }
+
+        .gist-loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .gist-error {
+            padding: 15px;
+            background: #ffebee;
+            border: 2px solid #ef5350;
+            border-radius: 10px;
+            color: #c62828;
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
@@ -606,6 +1114,44 @@
         <div class="recommendation-box" id="recommendationBox">
             <div class="recommendation-title">💡 建議翻開位置</div>
             <div class="recommendation-content" id="recommendationContent"></div>
+        </div>
+
+        <!-- Gist自動同步設定 -->
+        <div style="background: #e3f2fd; border: 2px solid #2196f3; border-radius: 15px; padding: 15px; margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                <div style="font-weight: bold; color: #1976d2; font-size: 16px;">
+                    🔗 自動同步設定
+                </div>
+                <button class="btn-small" onclick="toggleGistConfig()" style="background: #2196f3; color: white; border: none; padding: 5px 15px; border-radius: 8px; cursor: pointer; font-size: 12px;">
+                    ⚙️ 設定
+                </button>
+            </div>
+            <div id="gistConfigStatus" style="font-size: 13px; color: #666;">
+                未設定固定Gist
+            </div>
+        </div>
+
+        <div class="strategy-legend" id="strategyLegend" style="display: none;">
+            <div class="legend-item">
+                <div class="legend-color balanced"></div>
+                <span>⚖️ 平衡</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color conservative"></div>
+                <span>🛡️ 保守</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color aggressive"></div>
+                <span>🚀 激進</span>
+            </div>
+            <div class="legend-item" id="learnedLegend" style="display: none;">
+                <div class="legend-color learned"></div>
+                <span>🧠 AI學習</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color multiple"></div>
+                <span>★ 多重推薦</span>
+            </div>
         </div>
 
         <div class="grid-container" id="grid">
@@ -646,13 +1192,206 @@
             
             <div class="history-controls">
                 <button class="btn-small btn-history" onclick="toggleHistory()">顯示/隱藏歷史</button>
+                <button class="btn-small btn-history" onclick="exportData()">📤 匯出數據</button>
+                <button class="btn-small btn-history" onclick="document.getElementById('importFile').click()">📥 匯入檔案</button>
+                <button class="btn-small btn-history" onclick="showGistImportDialog()">🔗 從Gist讀取</button>
                 <button class="btn-small btn-clear" onclick="clearHistory()">清除歷史</button>
+                <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importData(event)">
             </div>
 
             <div id="historyContent" style="display: none;">
                 <div class="history-stats" id="historyStats"></div>
                 <div class="insights-box" id="insightsBox" style="display: none;"></div>
                 <div class="history-list" id="historyList"></div>
+            </div>
+        </div>
+
+        <div class="stats-analysis-section" id="statsAnalysisSection">
+            <div class="history-title">
+                <span>🔬 深度統計分析</span>
+            </div>
+            
+            <div class="stats-tab-buttons">
+                <button class="stats-tab-btn active" onclick="switchStatsTab('position')">📍 位置分布</button>
+                <button class="stats-tab-btn" onclick="switchStatsTab('pattern')">🔍 模式探測</button>
+                <button class="stats-tab-btn" onclick="switchStatsTab('prediction')">🎯 預測模型</button>
+                <button class="stats-tab-btn" onclick="switchStatsTab('ml')">🤖 AI機器學習</button>
+                <button class="stats-tab-btn" onclick="switchStatsTab('fairness')">⚖️ 公平性檢驗</button>
+            </div>
+
+            <div id="statsPositionContent" class="stats-content active"></div>
+            <div id="statsPatternContent" class="stats-content"></div>
+            <div id="statsPredictionContent" class="stats-content"></div>
+            <div id="statsMlContent" class="stats-content"></div>
+            <div id="statsFairnessContent" class="stats-content"></div>
+        </div>
+
+        <!-- Gist配置對話框 -->
+        <div class="gist-dialog" id="gistConfigDialog">
+            <div class="gist-dialog-content" style="max-width: 600px;">
+                <div class="gist-dialog-title">⚙️ 數據源配置</div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 10px; color: #666; font-size: 14px; font-weight: bold;">
+                        選擇數據源類型:
+                    </label>
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <label style="flex: 1; cursor: pointer;">
+                            <input type="radio" name="sourceType" value="gist" checked onchange="updateSourceType()" style="margin-right: 5px;">
+                            <span style="font-size: 14px;">📝 GitHub Gist</span>
+                        </label>
+                        <label style="flex: 1; cursor: pointer;">
+                            <input type="radio" name="sourceType" value="repo" onchange="updateSourceType()" style="margin-right: 5px;">
+                            <span style="font-size: 14px;">📦 GitHub Repo</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Gist 輸入 -->
+                <div id="gistInput" style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; color: #666; font-size: 14px; font-weight: bold;">
+                        Gist URL:
+                    </label>
+                    <input type="text" 
+                           id="fixedGistUrl" 
+                           class="gist-input" 
+                           placeholder="例如: https://gist.github.com/username/abc123...">
+                    <div class="gist-help" style="margin-top: 10px; padding: 10px;">
+                        <strong>範例:</strong><br>
+                        https://gist.github.com/username/abc123
+                    </div>
+                </div>
+
+                <!-- Repo 輸入 -->
+                <div id="repoInput" style="margin-bottom: 15px; display: none;">
+                    <label style="display: block; margin-bottom: 5px; color: #666; font-size: 14px; font-weight: bold;">
+                        GitHub Repository:
+                    </label>
+                    <input type="text" 
+                           id="repoOwner" 
+                           class="gist-input" 
+                           placeholder="用戶名 (例如: octocat)"
+                           style="margin-bottom: 10px;">
+                    <input type="text" 
+                           id="repoName" 
+                           class="gist-input" 
+                           placeholder="倉庫名 (例如: my-data)"
+                           style="margin-bottom: 10px;">
+                    <input type="text" 
+                           id="repoPath" 
+                           class="gist-input" 
+                           placeholder="資料夾路徑 (例如: data 或留空為根目錄)">
+                    <div class="gist-help" style="margin-top: 10px; padding: 10px;">
+                        <strong>程式會自動讀取:</strong><br>
+                        • 指定路徑下的所有 .json 檔案<br>
+                        • 支援子資料夾遞迴搜尋<br>
+                        <br>
+                        <strong>範例結構:</strong><br>
+                        <code style="font-size: 11px; display: block; margin-top: 5px;">
+                        your-repo/<br>
+                        └─ data/<br>
+                        &nbsp;&nbsp;&nbsp;├─ 2024-01.json<br>
+                        &nbsp;&nbsp;&nbsp;├─ 2024-02.json<br>
+                        &nbsp;&nbsp;&nbsp;└─ players/<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├─ alice.json<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ bob.json
+                        </code>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="checkbox" id="autoSyncEnabled" style="margin-right: 8px; width: 18px; height: 18px; cursor: pointer;">
+                        <span style="color: #666; font-size: 14px;">啟用自動同步 (載入頁面時自動讀取)</span>
+                    </label>
+                </div>
+
+                <div class="gist-help">
+                    <strong>📝 功能說明:</strong><br>
+                    • <strong>Gist:</strong> 適合小量數據、快速分享<br>
+                    • <strong>Repo:</strong> 適合大量數據、版本控制、組織管理<br>
+                    • 開啟自動同步後，每次打開頁面會自動載入<br>
+                    • 資料會自動合併到本地記錄<br>
+                </div>
+
+                <div class="gist-buttons">
+                    <button class="gist-btn gist-btn-primary" onclick="saveGistConfig()">
+                        ✓ 儲存設定
+                    </button>
+                    <button class="gist-btn gist-btn-secondary" onclick="clearGistConfig()">
+                        🗑️ 清除設定
+                    </button>
+                    <button class="gist-btn gist-btn-secondary" onclick="closeGistConfigDialog()">
+                        ✕ 取消
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gist 匯入對話框 -->
+        <div class="gist-dialog" id="gistDialog">
+            <div class="gist-dialog-content" style="max-width: 600px;">
+                <div class="gist-dialog-title">🔗 從 GitHub Gist 批量讀取數據</div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; color: #666; font-size: 14px; font-weight: bold;">
+                        Gist URL 或 Raw URL (每行一個):
+                    </label>
+                    <textarea id="gistUrlInput" 
+                              class="gist-input" 
+                              placeholder="例如:
+https://gist.github.com/username/abc123...
+https://gist.githubusercontent.com/username/def456/raw/
+https://gist.github.com/username/ghi789..."
+                              style="min-height: 120px; resize: vertical; font-family: monospace; font-size: 12px;"
+                              rows="5"></textarea>
+                    <div style="text-align: right; color: #999; font-size: 12px; margin-top: 5px;">
+                        已輸入 <span id="urlCount">0</span> 個URL
+                    </div>
+                </div>
+
+                <div class="gist-help">
+                    <strong>📝 使用說明:</strong><br>
+                    1. 可以一次貼上<strong>多個Gist URL</strong> (每行一個)<br>
+                    2. <strong>自動讀取Gist內所有JSON檔案</strong> 🔥<br>
+                    3. 程式會自動合併所有數據並去重<br>
+                    <br>
+                    <strong>💡 支援場景:</strong><br>
+                    • 一個Gist內放多個月份的備份<br>
+                    • 收集多位朋友的數據<br>
+                    • 讀取社群數據池<br>
+                    <br>
+                    <strong>🎯 範例結構:</strong><br>
+                    <code style="font-size: 11px; background: #f0f0f0; padding: 2px 5px; border-radius: 3px;">
+                    一個Gist包含:<br>
+                    ├─ january_data.json (50局)<br>
+                    ├─ february_data.json (60局)<br>
+                    └─ march_data.json (70局)<br>
+                    → 自動讀取全部 180局!
+                    </code>
+                </div>
+
+                <div id="gistLoadingIndicator" class="gist-loading" style="display: none;">
+                    <div style="font-size: 24px; margin-bottom: 10px;">⏳</div>
+                    <div id="gistProgressText">正在讀取數據...</div>
+                    <div style="margin-top: 10px;">
+                        <div style="background: #e0e0e0; height: 20px; border-radius: 10px; overflow: hidden;">
+                            <div id="gistProgressBar" style="width: 0%; height: 100%; background: #667eea; transition: width 0.3s;"></div>
+                        </div>
+                        <div style="font-size: 12px; margin-top: 5px;" id="gistProgressDetail">0 / 0</div>
+                    </div>
+                </div>
+
+                <div id="gistErrorMessage" class="gist-error" style="display: none;"></div>
+
+                <div class="gist-buttons">
+                    <button class="gist-btn gist-btn-primary" onclick="importFromGist()">
+                        📥 批量讀取
+                    </button>
+                    <button class="gist-btn gist-btn-secondary" onclick="closeGistDialog()">
+                        ✕ 取消
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -892,6 +1631,8 @@
                 cell.textContent = '?';
                 cell.classList.remove('filled');
                 cell.classList.remove('recommended');
+                cell.classList.remove('strategy-balanced', 'strategy-conservative', 
+                    'strategy-aggressive', 'strategy-learned', 'strategy-multiple');
                 cell.style.border = '3px solid #667eea';
             });
             
@@ -901,6 +1642,7 @@
             
             document.getElementById('results').classList.remove('show');
             document.getElementById('recommendationBox').classList.remove('show');
+            document.getElementById('strategyLegend').style.display = 'none';
             
             // 顯示初始推薦
             updateRecommendation();
@@ -1205,8 +1947,14 @@
             
             alert(message);
             updateHistoryDisplay();
+            updateStatisticalAnalysis();
             document.getElementById('historySection').classList.add('show');
             document.getElementById('historyContent').style.display = 'block';
+            
+            // 顯示統計分析(需要至少10局數據)
+            if (gameHistory.length >= 10) {
+                document.getElementById('statsAnalysisSection').classList.add('show');
+            }
         }
 
         function analyzeAccuracy() {
@@ -1460,8 +2208,1660 @@
                 gameHistory = [];
                 localStorage.removeItem('cactpotHistory');
                 document.getElementById('historySection').classList.remove('show');
+                document.getElementById('statsAnalysisSection').classList.remove('show');
                 alert('✅ 歷史記錄已清除');
             }
+        }
+
+        function exportData() {
+            if (gameHistory.length === 0) {
+                alert('⚠️ 沒有數據可以匯出!');
+                return;
+            }
+
+            // 準備匯出數據
+            const exportObj = {
+                version: '1.0',
+                exportDate: new Date().toISOString(),
+                totalGames: gameHistory.length,
+                data: gameHistory,
+                metadata: {
+                    firstGame: gameHistory[0].timestamp,
+                    lastGame: gameHistory[gameHistory.length - 1].timestamp,
+                    averageReward: Math.round(gameHistory.reduce((sum, r) => sum + r.actualReward, 0) / gameHistory.length),
+                    highRewardCount: gameHistory.filter(r => r.actualReward >= 1000).length
+                }
+            };
+
+            // 轉換為JSON字串
+            const jsonString = JSON.stringify(exportObj, null, 2);
+            
+            // 創建下載連結
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            
+            // 設定檔名 (包含日期)
+            const date = new Date().toISOString().split('T')[0];
+            link.download = `cactpot_data_${date}_${gameHistory.length}games.json`;
+            link.href = url;
+            
+            // 觸發下載
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            alert(`✅ 成功匯出 ${gameHistory.length} 局記錄!\n檔案: cactpot_data_${date}_${gameHistory.length}games.json`);
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    
+                    // 驗證數據格式
+                    if (!importedData.version || !importedData.data || !Array.isArray(importedData.data)) {
+                        throw new Error('無效的數據格式');
+                    }
+
+                    // 顯示匯入選項對話框
+                    showImportDialog(importedData);
+                    
+                } catch (error) {
+                    alert('❌ 匯入失敗: ' + error.message + '\n請確認檔案格式正確');
+                }
+            };
+            reader.readAsText(file);
+            
+            // 重置input,允許重複匯入同一檔案
+            event.target.value = '';
+        }
+
+        function showImportDialog(importedData) {
+            const currentCount = gameHistory.length;
+            const importCount = importedData.data.length;
+            const metadata = importedData.metadata || {};
+
+            const message = `
+📊 匯入數據摘要:
+━━━━━━━━━━━━━━━━━━
+📁 檔案版本: ${importedData.version}
+📅 匯出日期: ${new Date(importedData.exportDate).toLocaleString('zh-TW')}
+🎮 遊戲局數: ${importCount} 局
+📈 平均獎勵: ${metadata.averageReward || 'N/A'} MGP
+🎯 高獎次數: ${metadata.highRewardCount || 'N/A'} 次
+
+━━━━━━━━━━━━━━━━━━
+💾 當前數據: ${currentCount} 局
+
+請選擇匯入方式:
+━━━━━━━━━━━━━━━━━━
+[確定] = 合併數據 (新增 ${importCount} 局)
+[取消] = 取消匯入
+            `;
+
+            if (confirm(message)) {
+                // 合併模式
+                mergeImportedData(importedData.data);
+            }
+        }
+
+        function mergeImportedData(newData) {
+            // 檢查重複 (基於timestamp)
+            const existingTimestamps = new Set(gameHistory.map(r => r.timestamp));
+            let duplicateCount = 0;
+            let addedCount = 0;
+
+            newData.forEach(record => {
+                if (!existingTimestamps.has(record.timestamp)) {
+                    gameHistory.push(record);
+                    addedCount++;
+                } else {
+                    duplicateCount++;
+                }
+            });
+
+            // 按時間排序
+            gameHistory.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+            // 儲存到localStorage
+            localStorage.setItem('cactpotHistory', JSON.stringify(gameHistory));
+
+            // 更新顯示
+            updateHistoryDisplay();
+            if (gameHistory.length >= 10) {
+                updateStatisticalAnalysis();
+                document.getElementById('statsAnalysisSection').classList.add('show');
+            }
+            document.getElementById('historySection').classList.add('show');
+            document.getElementById('historyContent').style.display = 'block';
+
+            // 顯示結果
+            let resultMessage = `✅ 匯入完成!\n\n`;
+            resultMessage += `📥 新增: ${addedCount} 局\n`;
+            if (duplicateCount > 0) {
+                resultMessage += `⚠️ 跳過重複: ${duplicateCount} 局\n`;
+            }
+            resultMessage += `\n💾 目前總計: ${gameHistory.length} 局`;
+
+            alert(resultMessage);
+        }
+
+        function replaceImportedData(newData) {
+            if (!confirm(`⚠️ 警告!\n\n這將會刪除你現有的 ${gameHistory.length} 局記錄!\n確定要繼續嗎?`)) {
+                return;
+            }
+
+            gameHistory = newData;
+            localStorage.setItem('cactpotHistory', JSON.stringify(gameHistory));
+
+            // 更新顯示
+            updateHistoryDisplay();
+            if (gameHistory.length >= 10) {
+                updateStatisticalAnalysis();
+                document.getElementById('statsAnalysisSection').classList.add('show');
+            }
+            document.getElementById('historySection').classList.add('show');
+            document.getElementById('historyContent').style.display = 'block';
+
+            alert(`✅ 數據已替換!\n\n💾 目前總計: ${gameHistory.length} 局`);
+        }
+
+        // ========== GitHub Gist/Repo 固定配置 ==========
+        
+        let gistConfig = {
+            sourceType: 'repo', // 預設使用repo
+            fixedUrl: '',
+            repoOwner: 'Roromumu', // 預設Repo
+            repoName: 'cactpot-data',
+            repoPath: '', // 根目錄
+            autoSync: true // 預設啟用自動同步
+        };
+
+        // 頁面載入時初始化
+        window.addEventListener('DOMContentLoaded', function() {
+            loadGistConfig();
+            updateGistConfigStatus();
+            
+            // 如果啟用自動同步,自動載入
+            if (gistConfig.autoSync && (gistConfig.fixedUrl || (gistConfig.repoOwner && gistConfig.repoName))) {
+                setTimeout(() => {
+                    autoSyncFromGist();
+                }, 1000); // 延遲1秒讓頁面完全載入
+            }
+        });
+
+        function updateSourceType() {
+            const sourceType = document.querySelector('input[name="sourceType"]:checked').value;
+            
+            if (sourceType === 'gist') {
+                document.getElementById('gistInput').style.display = 'block';
+                document.getElementById('repoInput').style.display = 'none';
+            } else {
+                document.getElementById('gistInput').style.display = 'none';
+                document.getElementById('repoInput').style.display = 'block';
+            }
+        }
+
+        function loadGistConfig() {
+            const saved = localStorage.getItem('gistConfig');
+            if (saved) {
+                try {
+                    gistConfig = JSON.parse(saved);
+                    // 向後兼容舊版本
+                    if (!gistConfig.sourceType) {
+                        gistConfig.sourceType = 'gist';
+                    }
+                } catch (e) {
+                    console.error('Failed to load gist config:', e);
+                }
+            }
+        }
+
+        function saveGistConfigToStorage() {
+            localStorage.setItem('gistConfig', JSON.stringify(gistConfig));
+        }
+
+        function toggleGistConfig() {
+            document.getElementById('gistConfigDialog').classList.add('show');
+            
+            // 恢復設定
+            const sourceType = gistConfig.sourceType || 'gist';
+            document.querySelector(`input[name="sourceType"][value="${sourceType}"]`).checked = true;
+            updateSourceType();
+            
+            document.getElementById('fixedGistUrl').value = gistConfig.fixedUrl || '';
+            document.getElementById('repoOwner').value = gistConfig.repoOwner || '';
+            document.getElementById('repoName').value = gistConfig.repoName || '';
+            document.getElementById('repoPath').value = gistConfig.repoPath || '';
+            document.getElementById('autoSyncEnabled').checked = gistConfig.autoSync;
+        }
+
+        function closeGistConfigDialog() {
+            document.getElementById('gistConfigDialog').classList.remove('show');
+        }
+
+        function saveGistConfig() {
+            const sourceType = document.querySelector('input[name="sourceType"]:checked').value;
+            const autoSync = document.getElementById('autoSyncEnabled').checked;
+
+            if (sourceType === 'gist') {
+                const url = document.getElementById('fixedGistUrl').value.trim();
+                
+                if (url && !extractGistId(url) && !convertToRawUrl(url)) {
+                    alert('⚠️ 無效的Gist URL格式');
+                    return;
+                }
+
+                gistConfig.sourceType = 'gist';
+                gistConfig.fixedUrl = url;
+                gistConfig.repoOwner = '';
+                gistConfig.repoName = '';
+                gistConfig.repoPath = '';
+            } else {
+                const owner = document.getElementById('repoOwner').value.trim();
+                const name = document.getElementById('repoName').value.trim();
+                const path = document.getElementById('repoPath').value.trim();
+
+                if (!owner || !name) {
+                    alert('⚠️ 請填寫用戶名和倉庫名');
+                    return;
+                }
+
+                gistConfig.sourceType = 'repo';
+                gistConfig.fixedUrl = '';
+                gistConfig.repoOwner = owner;
+                gistConfig.repoName = name;
+                gistConfig.repoPath = path;
+            }
+
+            gistConfig.autoSync = autoSync;
+            saveGistConfigToStorage();
+            updateGistConfigStatus();
+            closeGistConfigDialog();
+
+            let message = '✅ 設定已儲存!\n\n';
+            if (sourceType === 'gist') {
+                message += gistConfig.fixedUrl ? `Gist: ${gistConfig.fixedUrl.substring(0, 50)}...\n` : '未設定Gist\n';
+            } else {
+                message += `Repo: ${gistConfig.repoOwner}/${gistConfig.repoName}\n`;
+                message += gistConfig.repoPath ? `路徑: ${gistConfig.repoPath}\n` : '路徑: 根目錄\n';
+            }
+            message += autoSync ? '✓ 自動同步已啟用' : '✗ 自動同步已停用';
+
+            alert(message);
+        }
+
+        function clearGistConfig() {
+            if (!confirm('確定要清除數據源設定嗎?')) return;
+
+            gistConfig = {
+                sourceType: 'gist',
+                fixedUrl: '',
+                repoOwner: '',
+                repoName: '',
+                repoPath: '',
+                autoSync: false
+            };
+            saveGistConfigToStorage();
+            updateGistConfigStatus();
+            closeGistConfigDialog();
+
+            alert('✅ 設定已清除');
+        }
+
+        function updateGistConfigStatus() {
+            const statusDiv = document.getElementById('gistConfigStatus');
+            
+            if (gistConfig.sourceType === 'repo' && gistConfig.repoOwner && gistConfig.repoName) {
+                const repoInfo = `${gistConfig.repoOwner}/${gistConfig.repoName}${gistConfig.repoPath ? '/' + gistConfig.repoPath : ''}`;
+                statusDiv.innerHTML = `
+                    ✓ 數據源: <code style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-size: 11px;">📦 ${repoInfo}</code><br>
+                    ${gistConfig.autoSync ? '🔄 自動同步: <span style="color: #2e7d32;">已啟用</span>' : '⏸️ 自動同步: <span style="color: #666;">已停用</span>'}
+                    <button onclick="manualSyncFromGist()" style="margin-left: 10px; background: #4caf50; color: white; border: none; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 11px;">🔄 立即同步</button>
+                `;
+                statusDiv.style.color = '#333';
+            } else if (gistConfig.sourceType === 'gist' && gistConfig.fixedUrl) {
+                const shortUrl = gistConfig.fixedUrl.length > 40 ? 
+                    gistConfig.fixedUrl.substring(0, 40) + '...' : 
+                    gistConfig.fixedUrl;
+
+                statusDiv.innerHTML = `
+                    ✓ 數據源: <code style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-size: 11px;">📝 ${shortUrl}</code><br>
+                    ${gistConfig.autoSync ? '🔄 自動同步: <span style="color: #2e7d32;">已啟用</span>' : '⏸️ 自動同步: <span style="color: #666;">已停用</span>'}
+                    <button onclick="manualSyncFromGist()" style="margin-left: 10px; background: #4caf50; color: white; border: none; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 11px;">🔄 立即同步</button>
+                `;
+                statusDiv.style.color = '#333';
+            } else {
+                statusDiv.innerHTML = '❌ 未設定數據源';
+                statusDiv.style.color = '#999';
+            }
+        }
+
+        async function autoSyncFromGist() {
+            console.log('Auto-syncing...');
+            
+            try {
+                const result = await fetchDataFromSource();
+                
+                if (result.success && result.data.length > 0) {
+                    const existingTimestamps = new Set(gameHistory.map(r => r.timestamp));
+                    let addedCount = 0;
+
+                    result.data.forEach(record => {
+                        if (!existingTimestamps.has(record.timestamp)) {
+                            gameHistory.push(record);
+                            addedCount++;
+                        }
+                    });
+
+                    if (addedCount > 0) {
+                        gameHistory.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                        localStorage.setItem('cactpotHistory', JSON.stringify(gameHistory));
+                        updateHistoryDisplay();
+                        
+                        if (gameHistory.length >= 10) {
+                            updateStatisticalAnalysis();
+                            document.getElementById('statsAnalysisSection').classList.add('show');
+                        }
+                        document.getElementById('historySection').classList.add('show');
+                        
+                        console.log(`Auto-sync complete: ${addedCount} new records added`);
+                        showSyncNotification(`🔄 自動同步完成: 新增 ${addedCount} 局記錄`);
+                    } else {
+                        console.log('Auto-sync: No new data');
+                    }
+                }
+            } catch (error) {
+                console.error('Auto-sync failed:', error);
+            }
+        }
+
+        async function manualSyncFromGist() {
+            if (!gistConfig.fixedUrl && !(gistConfig.repoOwner && gistConfig.repoName)) {
+                alert('⚠️ 請先設定數據源');
+                return;
+            }
+
+            const loadingMsg = showSyncNotification('🔄 正在同步...', false);
+
+            try {
+                const result = await fetchDataFromSource();
+                
+                if (!result.success) {
+                    throw new Error(result.error);
+                }
+
+                if (result.data.length === 0) {
+                    alert('⚠️ 數據源中沒有有效數據');
+                    return;
+                }
+
+                const existingTimestamps = new Set(gameHistory.map(r => r.timestamp));
+                let addedCount = 0;
+
+                result.data.forEach(record => {
+                    if (!existingTimestamps.has(record.timestamp)) {
+                        gameHistory.push(record);
+                        addedCount++;
+                    }
+                });
+
+                gameHistory.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                localStorage.setItem('cactpotHistory', JSON.stringify(gameHistory));
+                updateHistoryDisplay();
+                
+                if (gameHistory.length >= 10) {
+                    updateStatisticalAnalysis();
+                    document.getElementById('statsAnalysisSection').classList.add('show');
+                }
+                document.getElementById('historySection').classList.add('show');
+
+                loadingMsg.remove();
+                showSyncNotification(`✅ 同步完成: 新增 ${addedCount} 局 | 總計 ${gameHistory.length} 局`, true, 3000);
+
+            } catch (error) {
+                loadingMsg.remove();
+                alert(`❌ 同步失敗: ${error.message}`);
+            }
+        }
+
+        async function fetchDataFromSource() {
+            if (gistConfig.sourceType === 'repo' && gistConfig.repoOwner && gistConfig.repoName) {
+                return await fetchFromRepo(gistConfig.repoOwner, gistConfig.repoName, gistConfig.repoPath);
+            } else if (gistConfig.sourceType === 'gist' && gistConfig.fixedUrl) {
+                return await fetchGistData(gistConfig.fixedUrl);
+            }
+            
+            return { success: false, error: '未設定數據源' };
+        }
+
+        async function fetchFromRepo(owner, repo, path = '') {
+            try {
+                // 使用GitHub API獲取目錄內容
+                const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+                const response = await fetch(apiUrl);
+                
+                if (!response.ok) {
+                    return { success: false, error: `HTTP ${response.status}` };
+                }
+
+                const contents = await response.json();
+                const allData = [];
+
+                // 遞迴處理所有項目
+                async function processItems(items) {
+                    for (const item of items) {
+                        if (item.type === 'file' && item.name.endsWith('.json')) {
+                            try {
+                                const fileResponse = await fetch(item.download_url);
+                                if (!fileResponse.ok) continue;
+
+                                const jsonText = await fileResponse.text();
+                                const importedData = JSON.parse(jsonText);
+
+                                if (importedData.version && importedData.data && Array.isArray(importedData.data)) {
+                                    allData.push(...importedData.data);
+                                }
+                            } catch (error) {
+                                console.error(`Error reading file ${item.name}:`, error);
+                            }
+                        } else if (item.type === 'dir') {
+                            // 遞迴讀取子目錄
+                            const subResponse = await fetch(item.url);
+                            if (subResponse.ok) {
+                                const subContents = await subResponse.json();
+                                await processItems(subContents);
+                            }
+                        }
+                    }
+                }
+
+                await processItems(Array.isArray(contents) ? contents : [contents]);
+
+                return { success: true, data: allData };
+
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function fetchGistData(url) {
+            try {
+                const gistId = extractGistId(url);
+                
+                if (!gistId) {
+                    // 嘗試直接Raw URL
+                    const rawUrl = convertToRawUrl(url);
+                    if (!rawUrl) {
+                        return { success: false, error: '無效的URL格式' };
+                    }
+
+                    const response = await fetch(rawUrl);
+                    if (!response.ok) {
+                        return { success: false, error: `HTTP ${response.status}` };
+                    }
+
+                    const jsonText = await response.text();
+                    const importedData = JSON.parse(jsonText);
+
+                    if (!importedData.version || !importedData.data || !Array.isArray(importedData.data)) {
+                        return { success: false, error: '無效的數據格式' };
+                    }
+
+                    return { success: true, data: importedData.data };
+                }
+
+                // 使用API讀取Gist的所有JSON檔案
+                const apiUrl = `https://api.github.com/gists/${gistId}`;
+                const gistResponse = await fetch(apiUrl);
+                
+                if (!gistResponse.ok) {
+                    return { success: false, error: `HTTP ${gistResponse.status}` };
+                }
+
+                const gistData = await gistResponse.json();
+                const files = gistData.files;
+                
+                const jsonFiles = Object.values(files).filter(file => 
+                    file.filename.endsWith('.json')
+                );
+
+                if (jsonFiles.length === 0) {
+                    return { success: false, error: '沒有找到JSON檔案' };
+                }
+
+                const allData = [];
+                for (const file of jsonFiles) {
+                    try {
+                        const fileResponse = await fetch(file.raw_url);
+                        if (!fileResponse.ok) continue;
+
+                        const jsonText = await fileResponse.text();
+                        const importedData = JSON.parse(jsonText);
+
+                        if (importedData.version && importedData.data && Array.isArray(importedData.data)) {
+                            allData.push(...importedData.data);
+                        }
+                    } catch (error) {
+                        console.error(`Error reading file ${file.filename}:`, error);
+                    }
+                }
+
+                return { success: true, data: allData };
+
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        function showSyncNotification(message, autoHide = true, duration = 2000) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 15px 25px;
+                border-radius: 10px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                z-index: 10001;
+                font-weight: bold;
+                animation: slideIn 0.3s ease-out;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            if (autoHide) {
+                setTimeout(() => {
+                    notification.style.animation = 'slideOut 0.3s ease-out';
+                    setTimeout(() => notification.remove(), 300);
+                }, duration);
+            }
+
+            return notification;
+        }
+
+        // 關閉配置對話框
+        document.addEventListener('click', function(event) {
+            const configDialog = document.getElementById('gistConfigDialog');
+            if (event.target === configDialog) {
+                closeGistConfigDialog();
+            }
+        });
+
+        // ========== GitHub Gist 讀取功能 ==========
+        
+        function showGistImportDialog() {
+            document.getElementById('gistDialog').classList.add('show');
+            document.getElementById('gistUrlInput').value = '';
+            document.getElementById('gistUrlInput').focus();
+            document.getElementById('gistErrorMessage').style.display = 'none';
+            document.getElementById('gistLoadingIndicator').style.display = 'none';
+            updateUrlCount();
+        }
+
+        function closeGistDialog() {
+            document.getElementById('gistDialog').classList.remove('show');
+        }
+
+        // 監聽輸入變化更新URL計數
+        document.addEventListener('DOMContentLoaded', function() {
+            const textarea = document.getElementById('gistUrlInput');
+            if (textarea) {
+                textarea.addEventListener('input', updateUrlCount);
+            }
+        });
+
+        function updateUrlCount() {
+            const textarea = document.getElementById('gistUrlInput');
+            if (!textarea) return;
+            
+            const urls = textarea.value.split('\n').filter(line => line.trim().length > 0);
+            document.getElementById('urlCount').textContent = urls.length;
+        }
+
+        async function importFromGist() {
+            const urlInput = document.getElementById('gistUrlInput').value.trim();
+            
+            if (!urlInput) {
+                showGistError('請輸入至少一個 Gist URL');
+                return;
+            }
+
+            // 分割多行URL
+            const urls = urlInput.split('\n')
+                .map(url => url.trim())
+                .filter(url => url.length > 0);
+
+            if (urls.length === 0) {
+                showGistError('請輸入有效的 Gist URL');
+                return;
+            }
+
+            // 顯示載入中
+            document.getElementById('gistLoadingIndicator').style.display = 'block';
+            document.getElementById('gistErrorMessage').style.display = 'none';
+            updateProgress(0, urls.length, '準備讀取...');
+
+            const allData = [];
+            const errors = [];
+            let successCount = 0;
+            let totalFiles = 0;
+
+            // 批量讀取每個Gist
+            for (let i = 0; i < urls.length; i++) {
+                const url = urls[i];
+                updateProgress(i, urls.length, `讀取第 ${i + 1} 個 Gist...`);
+
+                try {
+                    // 檢查是否為Gist API URL或Raw URL
+                    const gistId = extractGistId(url);
+                    
+                    if (!gistId) {
+                        // 可能是直接的Raw URL,用舊方法處理
+                        const rawUrl = convertToRawUrl(url);
+                        if (!rawUrl) {
+                            errors.push(`URL ${i + 1}: 無效格式`);
+                            continue;
+                        }
+
+                        const response = await fetch(rawUrl);
+                        if (!response.ok) {
+                            errors.push(`URL ${i + 1}: HTTP ${response.status}`);
+                            continue;
+                        }
+
+                        const jsonText = await response.text();
+                        const importedData = JSON.parse(jsonText);
+
+                        if (!importedData.version || !importedData.data || !Array.isArray(importedData.data)) {
+                            errors.push(`URL ${i + 1}: 無效數據格式`);
+                            continue;
+                        }
+
+                        allData.push(...importedData.data);
+                        successCount++;
+                        totalFiles++;
+                        continue;
+                    }
+
+                    // 使用GitHub API獲取Gist的所有檔案
+                    const apiUrl = `https://api.github.com/gists/${gistId}`;
+                    const gistResponse = await fetch(apiUrl);
+                    
+                    if (!gistResponse.ok) {
+                        errors.push(`Gist ${i + 1}: HTTP ${gistResponse.status}`);
+                        continue;
+                    }
+
+                    const gistData = await gistResponse.json();
+                    const files = gistData.files;
+                    
+                    // 找出所有JSON檔案
+                    const jsonFiles = Object.values(files).filter(file => 
+                        file.filename.endsWith('.json')
+                    );
+
+                    if (jsonFiles.length === 0) {
+                        errors.push(`Gist ${i + 1}: 沒有找到JSON檔案`);
+                        continue;
+                    }
+
+                    // 讀取每個JSON檔案
+                    let gistSuccessCount = 0;
+                    for (const file of jsonFiles) {
+                        try {
+                            updateProgress(i, urls.length, 
+                                `Gist ${i + 1}: 讀取 ${file.filename}...`);
+
+                            const fileResponse = await fetch(file.raw_url);
+                            if (!fileResponse.ok) continue;
+
+                            const jsonText = await fileResponse.text();
+                            const importedData = JSON.parse(jsonText);
+
+                            if (importedData.version && importedData.data && Array.isArray(importedData.data)) {
+                                allData.push(...importedData.data);
+                                gistSuccessCount++;
+                                totalFiles++;
+                            }
+                        } catch (error) {
+                            console.error(`Error reading file ${file.filename}:`, error);
+                        }
+                    }
+
+                    if (gistSuccessCount > 0) {
+                        successCount++;
+                    } else {
+                        errors.push(`Gist ${i + 1}: 所有JSON檔案格式無效`);
+                    }
+
+                } catch (error) {
+                    console.error(`Error fetching ${url}:`, error);
+                    errors.push(`URL ${i + 1}: ${error.message}`);
+                }
+            }
+
+            // 完成
+            updateProgress(urls.length, urls.length, '處理完成!');
+            
+            // 顯示結果
+            await new Promise(resolve => setTimeout(resolve, 500));
+            document.getElementById('gistLoadingIndicator').style.display = 'none';
+
+            if (allData.length === 0) {
+                showGistError(`讀取失敗!\n\n${errors.join('\n')}`);
+                return;
+            }
+
+            // 關閉對話框
+            closeGistDialog();
+
+            // 組合成標準格式
+            const combinedData = {
+                version: '1.0',
+                exportDate: new Date().toISOString(),
+                totalGames: allData.length,
+                data: allData,
+                metadata: {
+                    sources: successCount,
+                    totalSources: urls.length,
+                    totalFiles: totalFiles,
+                    errors: errors.length
+                }
+            };
+
+            // 顯示摘要
+            let summary = `📊 批量讀取完成!\n\n`;
+            summary += `✅ 成功 Gist: ${successCount} / ${urls.length}\n`;
+            summary += `📄 成功檔案: ${totalFiles} 個 JSON\n`;
+            summary += `📦 總數據: ${allData.length} 局\n`;
+            
+            if (errors.length > 0) {
+                summary += `\n⚠️ 失敗: ${errors.length} 個\n`;
+                summary += errors.slice(0, 3).join('\n');
+                if (errors.length > 3) {
+                    summary += `\n...還有 ${errors.length - 3} 個錯誤`;
+                }
+            }
+
+            alert(summary);
+
+            // 顯示匯入對話框
+            showImportDialog(combinedData);
+        }
+
+        function extractGistId(url) {
+            // 從各種格式的URL提取Gist ID
+            // https://gist.github.com/username/abc123def456
+            // https://gist.githubusercontent.com/username/abc123def456/raw/
+            
+            const patterns = [
+                /gist\.github\.com\/[^\/]+\/([a-f0-9]+)/,
+                /gist\.githubusercontent\.com\/[^\/]+\/([a-f0-9]+)/
+            ];
+
+            for (const pattern of patterns) {
+                const match = url.match(pattern);
+                if (match) return match[1];
+            }
+
+            // 也許用戶直接貼了Gist ID
+            if (/^[a-f0-9]{20,}$/.test(url)) {
+                return url;
+            }
+
+            return null;
+        }
+
+        function updateProgress(current, total, message) {
+            const percentage = total > 0 ? (current / total * 100) : 0;
+            document.getElementById('gistProgressBar').style.width = percentage + '%';
+            document.getElementById('gistProgressText').textContent = message;
+            document.getElementById('gistProgressDetail').textContent = `${current} / ${total}`;
+        }
+
+        function convertToRawUrl(url) {
+            // 移除前後空白
+            url = url.trim();
+
+            // 如果已經是 Raw URL
+            if (url.includes('gist.githubusercontent.com')) {
+                return url;
+            }
+
+            // 轉換 Gist URL 為 Raw URL
+            // 格式: https://gist.github.com/username/gist_id
+            // 轉為: https://gist.githubusercontent.com/username/gist_id/raw/
+            
+            const gistMatch = url.match(/gist\.github\.com\/([^\/]+)\/([a-f0-9]+)/);
+            
+            if (gistMatch) {
+                const username = gistMatch[1];
+                const gistId = gistMatch[2];
+                return `https://gist.githubusercontent.com/${username}/${gistId}/raw/`;
+            }
+
+            // 嘗試直接使用 (可能用戶已經複製了正確的 URL)
+            if (url.startsWith('http://') || url.startsWith('https://')) {
+                return url;
+            }
+
+            return null;
+        }
+
+        function showGistError(message) {
+            const errorDiv = document.getElementById('gistErrorMessage');
+            errorDiv.textContent = '❌ ' + message;
+            errorDiv.style.display = 'block';
+        }
+
+        // 點擊對話框外部關閉
+        document.addEventListener('click', function(event) {
+            const dialog = document.getElementById('gistDialog');
+            if (event.target === dialog) {
+                closeGistDialog();
+            }
+        });
+
+        // ESC 鍵關閉對話框
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeGistDialog();
+            }
+        });
+
+        function switchStatsTab(tab) {
+            // 切換按鈕狀態
+            document.querySelectorAll('.stats-tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // 切換內容
+            document.querySelectorAll('.stats-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`stats${tab.charAt(0).toUpperCase() + tab.slice(1)}Content`).classList.add('active');
+        }
+
+        function updateStatisticalAnalysis() {
+            if (gameHistory.length < 10) return;
+
+            updatePositionAnalysis();
+            updatePatternAnalysis();
+            updatePredictionModel();
+            updateMLAnalysis();
+            updateFairnessTest();
+        }
+
+        function updatePositionAnalysis() {
+            const positionContent = document.getElementById('statsPositionContent');
+            
+            // 統計每個位置的數字分布
+            const positionStats = {};
+            for (let r = 0; r < 3; r++) {
+                for (let c = 0; c < 3; c++) {
+                    positionStats[`${r},${c}`] = {
+                        1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0,
+                        total: 0
+                    };
+                }
+            }
+
+            gameHistory.forEach(record => {
+                if (!record.fullGrid) return;
+                for (let r = 0; r < 3; r++) {
+                    for (let c = 0; c < 3; c++) {
+                        const num = record.fullGrid[r][c];
+                        const key = `${r},${c}`;
+                        positionStats[key][num]++;
+                        positionStats[key].total++;
+                    }
+                }
+            });
+
+            // 計算理論期望值 (每個數字應該是 1/9 ≈ 11.11%)
+            const expectedFreq = 100 / 9; // 11.11%
+
+            let html = '<h3 style="color: #667eea; margin-bottom: 15px;">📍 位置數字分布熱圖</h3>';
+            html += '<p style="color: #666; font-size: 13px; margin-bottom: 20px;">統計每個位置出現各數字的頻率，檢測是否有位置偏好</p>';
+
+            // 為每個位置創建分析
+            const positions = [
+                ['左上', 0, 0], ['上中', 0, 1], ['右上', 0, 2],
+                ['左中', 1, 0], ['中中', 1, 1], ['右中', 1, 2],
+                ['左下', 2, 0], ['下中', 2, 1], ['右下', 2, 2]
+            ];
+
+            html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;">';
+            
+            positions.forEach(([name, r, c]) => {
+                const key = `${r},${c}`;
+                const stats = positionStats[key];
+                
+                if (stats.total === 0) return;
+
+                // 找出最常出現和最少出現的數字
+                let maxNum = 1, maxCount = stats[1];
+                let minNum = 1, minCount = stats[1];
+                
+                for (let n = 1; n <= 9; n++) {
+                    if (stats[n] > maxCount) {
+                        maxCount = stats[n];
+                        maxNum = n;
+                    }
+                    if (stats[n] < minCount) {
+                        minCount = stats[n];
+                        minNum = n;
+                    }
+                }
+
+                const maxFreq = (maxCount / stats.total * 100).toFixed(1);
+                const minFreq = (minCount / stats.total * 100).toFixed(1);
+                const deviation = Math.abs(maxFreq - expectedFreq);
+
+                // 根據偏差程度設定背景色
+                let bgColor = '#e8f5e9';
+                if (deviation > 8) bgColor = '#ffebee';
+                else if (deviation > 5) bgColor = '#fff9c4';
+
+                html += `
+                    <div style="background: ${bgColor}; padding: 15px; border-radius: 10px; border: 2px solid #ddd;">
+                        <div style="font-weight: bold; color: #333; margin-bottom: 10px; text-align: center;">${name}</div>
+                        <div style="font-size: 12px; color: #666; text-align: center;">
+                            <div style="margin: 5px 0;">最常: <strong>${maxNum}</strong> (${maxFreq}%)</div>
+                            <div style="margin: 5px 0;">最少: <strong>${minNum}</strong> (${minFreq}%)</div>
+                            <div style="margin: 5px 0; color: ${deviation > 5 ? '#c62828' : '#2e7d32'};">
+                                偏差: ${deviation.toFixed(1)}%
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+
+            // 詳細頻率表
+            html += '<h4 style="color: #667eea; margin: 20px 0 10px 0;">詳細頻率表</h4>';
+            html += '<table class="frequency-table"><thead><tr><th>位置</th>';
+            for (let n = 1; n <= 9; n++) {
+                html += `<th>${n}</th>`;
+            }
+            html += '</tr></thead><tbody>';
+
+            positions.forEach(([name, r, c]) => {
+                const key = `${r},${c}`;
+                const stats = positionStats[key];
+                if (stats.total === 0) return;
+
+                html += `<tr><td><strong>${name}</strong></td>`;
+                for (let n = 1; n <= 9; n++) {
+                    const freq = (stats[n] / stats.total * 100).toFixed(1);
+                    const deviation = Math.abs(freq - expectedFreq);
+                    let className = 'deviation-normal';
+                    if (deviation > 5) className = freq > expectedFreq ? 'deviation-high' : 'deviation-low';
+                    
+                    html += `<td><span class="${className}">${freq}%</span></td>`;
+                }
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            html += '<p style="color: #999; font-size: 11px; margin-top: 10px; text-align: center;">理論期望: 11.1% | 紅色=偏高 | 藍色=偏低 | 綠色=正常</p>';
+
+            positionContent.innerHTML = html;
+        }
+
+        function updatePatternAnalysis() {
+            const patternContent = document.getElementById('statsPatternContent');
+            
+            let html = '<h3 style="color: #667eea; margin-bottom: 15px;">🔍 高獎勵模式探測</h3>';
+
+            // 分析高獎勵局(>=1000 MGP)的特徵
+            const highRewardGames = gameHistory.filter(r => r.actualReward >= 1000);
+            const lowRewardGames = gameHistory.filter(r => r.actualReward < 500);
+
+            if (highRewardGames.length < 3) {
+                html += '<p style="color: #666;">需要至少3局高獎勵記錄才能進行模式分析</p>';
+                patternContent.innerHTML = html;
+                return;
+            }
+
+            html += `<p style="color: #666; font-size: 13px; margin-bottom: 20px;">分析 ${highRewardGames.length} 局高獎勵(≥1000)和 ${lowRewardGames.length} 局低獎勵(<500)的差異</p>`;
+
+            // 模式1: 中間格數字分析
+            const centerNumbersHigh = highRewardGames.map(r => r.fullGrid[1][1]);
+            const centerNumbersLow = lowRewardGames.map(r => r.fullGrid ? r.fullGrid[1][1] : null).filter(n => n !== null);
+            
+            const centerCountHigh = {};
+            const centerCountLow = {};
+            centerNumbersHigh.forEach(n => centerCountHigh[n] = (centerCountHigh[n] || 0) + 1);
+            centerNumbersLow.forEach(n => centerCountLow[n] = (centerCountLow[n] || 0) + 1);
+
+            html += '<div class="pattern-card">';
+            html += '<div class="pattern-title">📌 中間格數字偏好</div>';
+            html += '<div class="pattern-detail">';
+            html += '<strong>高獎勵局:</strong> ';
+            Object.entries(centerCountHigh).sort((a,b) => b[1] - a[1]).forEach(([num, count]) => {
+                html += `${num}(${count}次) `;
+            });
+            html += '<br><strong>低獎勵局:</strong> ';
+            if (Object.keys(centerCountLow).length > 0) {
+                Object.entries(centerCountLow).sort((a,b) => b[1] - a[1]).forEach(([num, count]) => {
+                    html += `${num}(${count}次) `;
+                });
+            } else {
+                html += '數據不足';
+            }
+            html += '</div></div>';
+
+            // 模式2: 最佳線路分析
+            const bestLinesHigh = {};
+            highRewardGames.forEach(r => {
+                bestLinesHigh[r.actualBestLine] = (bestLinesHigh[r.actualBestLine] || 0) + 1;
+            });
+
+            html += '<div class="pattern-card">';
+            html += '<div class="pattern-title">🎯 高獎勵線路分布</div>';
+            html += '<div class="pattern-detail">';
+            Object.entries(bestLinesHigh).sort((a,b) => b[1] - a[1]).forEach(([line, count]) => {
+                const percent = (count / highRewardGames.length * 100).toFixed(1);
+                html += `${line}: ${count}次 (${percent}%)<br>`;
+            });
+            html += '</div></div>';
+
+            // 模式3: 數字組合關聯性
+            html += '<div class="pattern-card">';
+            html += '<div class="pattern-title">🔗 角落數字關聯</div>';
+            html += '<div class="pattern-detail">';
+            
+            const cornerPairs = {};
+            highRewardGames.forEach(r => {
+                if (!r.fullGrid) return;
+                const corners = [r.fullGrid[0][0], r.fullGrid[0][2], r.fullGrid[2][0], r.fullGrid[2][2]].sort();
+                const key = corners.join(',');
+                cornerPairs[key] = (cornerPairs[key] || 0) + 1;
+            });
+
+            const topPairs = Object.entries(cornerPairs).sort((a,b) => b[1] - a[1]).slice(0, 3);
+            if (topPairs.length > 0) {
+                html += '高獎勵局常見角落組合:<br>';
+                topPairs.forEach(([pair, count]) => {
+                    html += `[${pair}] 出現 ${count} 次<br>`;
+                });
+            } else {
+                html += '暫無明顯規律';
+            }
+            html += '</div></div>';
+
+            patternContent.innerHTML = html;
+        }
+
+        function updatePredictionModel() {
+            const predictionContent = document.getElementById('statsPredictionContent');
+            
+            let html = '<h3 style="color: #667eea; margin-bottom: 15px;">🎯 統計預測模型</h3>';
+            html += '<p style="color: #666; font-size: 13px; margin-bottom: 20px;">基於歷史數據的條件機率預測</p>';
+
+            if (gameHistory.length < 20) {
+                html += '<div class="pattern-card">';
+                html += '<div class="pattern-title">⚠️ 數據量不足</div>';
+                html += `<div class="pattern-detail">當前: ${gameHistory.length} 局<br>建議: 至少 20 局才能建立可靠的預測模型</div>`;
+                html += '</div>';
+                predictionContent.innerHTML = html;
+                return;
+            }
+
+            // 計算條件機率: P(高獎勵 | 中間格=X)
+            const conditionalProb = {};
+            for (let n = 1; n <= 9; n++) {
+                const withN = gameHistory.filter(r => r.fullGrid && r.fullGrid[1][1] === n);
+                const highRewardWithN = withN.filter(r => r.actualReward >= 1000);
+                if (withN.length >= 3) {
+                    conditionalProb[n] = {
+                        total: withN.length,
+                        highReward: highRewardWithN.length,
+                        probability: highRewardWithN.length / withN.length
+                    };
+                }
+            }
+
+            html += '<div class="pattern-card">';
+            html += '<div class="pattern-title">📊 中間格預測表</div>';
+            html += '<div class="pattern-detail">';
+            html += '<table class="frequency-table"><thead><tr><th>中間數字</th><th>樣本數</th><th>高獎機率</th><th>評估</th></tr></thead><tbody>';
+            
+            Object.entries(conditionalProb).sort((a,b) => b[1].probability - a[1].probability).forEach(([num, data]) => {
+                const prob = (data.probability * 100).toFixed(1);
+                let evaluation = '一般';
+                if (data.probability >= 0.3) evaluation = '🔥 很好';
+                else if (data.probability >= 0.2) evaluation = '👍 不錯';
+                else if (data.probability < 0.1) evaluation = '❄️ 較差';
+                
+                html += `<tr>
+                    <td><strong>${num}</strong></td>
+                    <td>${data.total}</td>
+                    <td>${prob}%</td>
+                    <td>${evaluation}</td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table></div></div>';
+
+            // 置信度評估
+            const totalSample = gameHistory.length;
+            let confidence = 0;
+            if (totalSample >= 100) confidence = 90;
+            else if (totalSample >= 50) confidence = 70;
+            else if (totalSample >= 20) confidence = 50;
+            else confidence = 30;
+
+            html += '<div class="pattern-card">';
+            html += '<div class="pattern-title">📈 模型信心度</div>';
+            html += `<div class="pattern-detail">基於 ${totalSample} 局數據</div>`;
+            html += `<div class="confidence-meter">
+                <div class="confidence-fill" style="width: ${confidence}%">${confidence}%</div>
+            </div>`;
+            html += '<div style="font-size: 12px; color: #666; margin-top: 10px;">';
+            if (confidence >= 70) {
+                html += '✅ 數據量充足，預測參考價值較高';
+            } else if (confidence >= 50) {
+                html += '⚠️ 數據量中等，建議繼續累積';
+            } else {
+                html += '❌ 數據量偏少，預測僅供參考';
+            }
+            html += '</div></div>';
+
+            predictionContent.innerHTML = html;
+        }
+
+        function updateFairnessTest() {
+            const fairnessContent = document.getElementById('statsFairnessContent');
+            
+            let html = '<h3 style="color: #667eea; margin-bottom: 15px;">⚖️ 隨機性與公平性檢驗</h3>';
+            html += '<p style="color: #666; font-size: 13px; margin-bottom: 20px;">統計檢驗遊戲是否真正隨機</p>';
+
+            if (gameHistory.length < 30) {
+                html += '<div class="pattern-card">';
+                html += '<div class="pattern-title">⚠️ 數據量不足</div>';
+                html += `<div class="pattern-detail">當前: ${gameHistory.length} 局<br>建議: 至少 30 局才能進行可靠的統計檢驗</div>`;
+                html += '</div>';
+                fairnessContent.innerHTML = html;
+                return;
+            }
+
+            // 檢驗1: 數字出現頻率均勻性
+            const numberFreq = {};
+            for (let n = 1; n <= 9; n++) numberFreq[n] = 0;
+            
+            gameHistory.forEach(record => {
+                if (!record.fullGrid) return;
+                record.fullGrid.flat().forEach(num => {
+                    numberFreq[num]++;
+                });
+            });
+
+            const totalNumbers = Object.values(numberFreq).reduce((a,b) => a+b, 0);
+            const expectedPerNumber = totalNumbers / 9;
+            
+            // 計算卡方統計量
+            let chiSquare = 0;
+            Object.values(numberFreq).forEach(observed => {
+                chiSquare += Math.pow(observed - expectedPerNumber, 2) / expectedPerNumber;
+            });
+            
+            // 自由度 = 8, 顯著水平 0.05 的臨界值約為 15.51
+            const isFair = chiSquare < 15.51;
+
+            html += '<div class="pattern-card">';
+            html += '<div class="pattern-title">📊 卡方檢驗 (Chi-Square Test)</div>';
+            html += '<div class="pattern-detail">';
+            html += `<strong>檢驗結果:</strong> χ² = ${chiSquare.toFixed(2)}<br>`;
+            html += `<strong>臨界值:</strong> 15.51 (α=0.05)<br>`;
+            html += `<strong>結論:</strong> ${isFair ? '✅ 通過檢驗，分布均勻' : '⚠️ 未通過，存在偏差'}<br>`;
+            html += '<div style="margin-top: 10px; font-size: 12px; color: #888;">檢驗各數字出現頻率是否符合均勻分布</div>';
+            html += '</div></div>';
+
+            // 檢驗2: 獎勵分布檢驗
+            const avgReward = gameHistory.reduce((sum, r) => sum + r.actualReward, 0) / gameHistory.length;
+            const theoreticalAvg = 200; // 粗略理論平均值
+            const deviation = ((avgReward - theoreticalAvg) / theoreticalAvg * 100).toFixed(1);
+
+            html += '<div class="pattern-card">';
+            html += '<div class="pattern-title">💰 獎勵期望值檢驗</div>';
+            html += '<div class="pattern-detail">';
+            html += `<strong>實際平均:</strong> ${avgReward.toFixed(0)} MGP<br>`;
+            html += `<strong>理論預期:</strong> ~${theoreticalAvg} MGP<br>`;
+            html += `<strong>偏差:</strong> ${deviation}%<br>`;
+            html += `<strong>評估:</strong> ${Math.abs(deviation) < 15 ? '✅ 正常範圍' : '⚠️ 偏差較大'}<br>`;
+            html += '</div></div>';
+
+            // 檢驗3: 連續性檢驗
+            html += '<div class="pattern-card">';
+            html += '<div class="pattern-title">🔄 隨機性評估</div>';
+            html += '<div class="pattern-detail">';
+            html += `<strong>樣本數:</strong> ${gameHistory.length} 局<br>`;
+            html += `<strong>高獎次數:</strong> ${gameHistory.filter(r => r.actualReward >= 1000).length} 次<br>`;
+            html += `<strong>最佳選擇率:</strong> ${(gameHistory.filter(r => r.isOptimal).length / gameHistory.length * 100).toFixed(1)}%<br>`;
+            
+            if (gameHistory.length >= 50) {
+                html += '<br><strong>總體評估:</strong> ';
+                if (isFair && Math.abs(deviation) < 15) {
+                    html += '✅ 遊戲隨機性良好，未發現明顯可利用規律';
+                } else {
+                    html += '⚠️ 存在統計偏差，但需更多數據驗證';
+                }
+            } else {
+                html += '<br><strong>提示:</strong> 建議累積至少50局數據以獲得更可靠的結論';
+            }
+            
+            html += '</div></div>';
+
+            fairnessContent.innerHTML = html;
+        }
+
+        // ========== 機器學習模組 ==========
+        
+        function updateMLAnalysis() {
+            const mlContent = document.getElementById('statsMlContent');
+            
+            let html = '<h3 style="color: #667eea; margin-bottom: 15px;">🤖 AI機器學習分析</h3>';
+            html += '<p style="color: #666; font-size: 13px; margin-bottom: 20px;">使用多種機器學習算法進行智能預測</p>';
+
+            if (gameHistory.length < 30) {
+                html += '<div class="ml-model-card">';
+                html += '<div class="ml-model-header">';
+                html += '<div class="ml-model-title">⚠️ 數據量不足</div>';
+                html += `<div class="ml-model-status ml-status-insufficient">需要 ${30 - gameHistory.length} 局</div>`;
+                html += '</div>';
+                html += `<div style="color: #666; font-size: 14px;">當前: ${gameHistory.length} 局<br>建議: 至少 30 局才能訓練可靠的機器學習模型</div>`;
+                html += '</div>';
+                mlContent.innerHTML = html;
+                return;
+            }
+
+            // 訓練所有模型
+            const models = trainMLModels();
+            
+            // 模型1: 決策樹
+            html += buildDecisionTreeCard(models.decisionTree);
+            
+            // 模型2: 貝氏分類器
+            html += buildBayesianCard(models.bayesian);
+            
+            // 模型3: 邏輯迴歸
+            html += buildLogisticCard(models.logistic);
+            
+            // 模型4: 集成學習
+            html += buildEnsembleCard(models.ensemble);
+            
+            // 模型準確度對比
+            html += buildAccuracyComparisonCard(models);
+
+            mlContent.innerHTML = html;
+        }
+
+        function trainMLModels() {
+            const trainingData = gameHistory.filter(r => r.fullGrid && r.allLines);
+            
+            return {
+                decisionTree: trainDecisionTree(trainingData),
+                bayesian: trainBayesianClassifier(trainingData),
+                logistic: trainLogisticRegression(trainingData),
+                ensemble: null // 稍後組合
+            };
+        }
+
+        // 決策樹模型
+        function trainDecisionTree(data) {
+            // 簡化的決策樹: 基於中間格和角落數字預測最佳線
+            const tree = {
+                totalSamples: data.length,
+                rules: [],
+                accuracy: 0
+            };
+
+            // 提取規則
+            const centerRules = {};
+            data.forEach(record => {
+                const center = record.fullGrid[1][1];
+                const bestLine = record.actualBestLine;
+                const key = `center_${center}`;
+                
+                if (!centerRules[key]) {
+                    centerRules[key] = {};
+                }
+                centerRules[key][bestLine] = (centerRules[key][bestLine] || 0) + 1;
+            });
+
+            // 生成規則
+            Object.entries(centerRules).forEach(([key, lines]) => {
+                const center = parseInt(key.split('_')[1]);
+                const sortedLines = Object.entries(lines).sort((a,b) => b[1] - a[1]);
+                const bestLine = sortedLines[0][0];
+                const confidence = sortedLines[0][1] / Object.values(lines).reduce((a,b) => a+b, 0);
+                
+                tree.rules.push({
+                    condition: `中間格 = ${center}`,
+                    prediction: bestLine,
+                    confidence: confidence,
+                    samples: Object.values(lines).reduce((a,b) => a+b, 0)
+                });
+            });
+
+            // 計算準確度
+            let correct = 0;
+            data.forEach(record => {
+                const center = record.fullGrid[1][1];
+                const rule = tree.rules.find(r => r.condition === `中間格 = ${center}`);
+                if (rule && rule.prediction === record.actualBestLine) {
+                    correct++;
+                }
+            });
+            tree.accuracy = correct / data.length;
+
+            return tree;
+        }
+
+        // 貝氏分類器
+        function trainBayesianClassifier(data) {
+            const model = {
+                totalSamples: data.length,
+                lineProbabilities: {},
+                featureProbabilities: {},
+                accuracy: 0
+            };
+
+            // 計算先驗機率 P(線)
+            data.forEach(record => {
+                const line = record.actualBestLine;
+                model.lineProbabilities[line] = (model.lineProbabilities[line] || 0) + 1;
+            });
+            Object.keys(model.lineProbabilities).forEach(line => {
+                model.lineProbabilities[line] /= data.length;
+            });
+
+            // 計算條件機率 P(特徵|線)
+            const lines = Object.keys(model.lineProbabilities);
+            lines.forEach(line => {
+                model.featureProbabilities[line] = {
+                    centerNumbers: {},
+                    cornerSums: {}
+                };
+
+                const lineRecords = data.filter(r => r.actualBestLine === line);
+                
+                lineRecords.forEach(record => {
+                    const center = record.fullGrid[1][1];
+                    model.featureProbabilities[line].centerNumbers[center] = 
+                        (model.featureProbabilities[line].centerNumbers[center] || 0) + 1;
+                    
+                    const cornerSum = record.fullGrid[0][0] + record.fullGrid[0][2] + 
+                                     record.fullGrid[2][0] + record.fullGrid[2][2];
+                    const sumBucket = Math.floor(cornerSum / 5) * 5; // 分組
+                    model.featureProbabilities[line].cornerSums[sumBucket] = 
+                        (model.featureProbabilities[line].cornerSums[sumBucket] || 0) + 1;
+                });
+
+                // 正規化
+                const centerTotal = Object.values(model.featureProbabilities[line].centerNumbers).reduce((a,b) => a+b, 0);
+                Object.keys(model.featureProbabilities[line].centerNumbers).forEach(num => {
+                    model.featureProbabilities[line].centerNumbers[num] /= centerTotal;
+                });
+            });
+
+            // 計算準確度
+            let correct = 0;
+            data.forEach(record => {
+                const predicted = predictWithBayesian(model, record.fullGrid);
+                if (predicted === record.actualBestLine) correct++;
+            });
+            model.accuracy = correct / data.length;
+
+            return model;
+        }
+
+        function predictWithBayesian(model, grid) {
+            const center = grid[1][1];
+            let maxProb = -1;
+            let bestLine = null;
+
+            Object.keys(model.lineProbabilities).forEach(line => {
+                let prob = model.lineProbabilities[line];
+                
+                const centerProb = model.featureProbabilities[line].centerNumbers[center] || 0.01;
+                prob *= centerProb;
+
+                if (prob > maxProb) {
+                    maxProb = prob;
+                    bestLine = line;
+                }
+            });
+
+            return bestLine;
+        }
+
+        // 邏輯迴歸 (簡化版)
+        function trainLogisticRegression(data) {
+            const model = {
+                totalSamples: data.length,
+                weights: {},
+                accuracy: 0
+            };
+
+            // 為每條線訓練權重
+            const lines = ['第1橫列', '第2橫列', '第3橫列', '第1直列', '第2直列', '第3直列', '左斜線', '右斜線'];
+            
+            lines.forEach(line => {
+                const lineRecords = data.filter(r => r.actualBestLine === line);
+                const lineWeight = lineRecords.length / data.length;
+                
+                // 計算特徵權重
+                const centerWeights = {};
+                lineRecords.forEach(record => {
+                    const center = record.fullGrid[1][1];
+                    centerWeights[center] = (centerWeights[center] || 0) + 1;
+                });
+
+                model.weights[line] = {
+                    baseProbability: lineWeight,
+                    centerWeights: centerWeights
+                };
+            });
+
+            // 計算準確度
+            let correct = 0;
+            data.forEach(record => {
+                const predicted = predictWithLogistic(model, record.fullGrid);
+                if (predicted === record.actualBestLine) correct++;
+            });
+            model.accuracy = correct / data.length;
+
+            return model;
+        }
+
+        function predictWithLogistic(model, grid) {
+            const center = grid[1][1];
+            let maxScore = -1;
+            let bestLine = null;
+
+            Object.entries(model.weights).forEach(([line, weights]) => {
+                let score = weights.baseProbability;
+                const centerWeight = weights.centerWeights[center] || 0;
+                score += centerWeight * 0.1;
+
+                if (score > maxScore) {
+                    maxScore = score;
+                    bestLine = line;
+                }
+            });
+
+            return bestLine;
+        }
+
+        // 構建模型卡片
+        function buildDecisionTreeCard(tree) {
+            let html = '<div class="ml-model-card">';
+            html += '<div class="ml-model-header">';
+            html += '<div class="ml-model-title">🌳 決策樹模型</div>';
+            html += `<div class="ml-model-status ml-status-ready">準確率 ${(tree.accuracy * 100).toFixed(1)}%</div>`;
+            html += '</div>';
+            
+            html += '<div style="color: #666; font-size: 13px; margin-bottom: 15px;">基於條件規則的決策預測</div>';
+            
+            html += '<div class="ml-metric">';
+            html += '<span class="ml-metric-label">訓練樣本數</span>';
+            html += `<span class="ml-metric-value">${tree.totalSamples} 局</span>`;
+            html += '</div>';
+
+            html += '<div class="ml-metric">';
+            html += '<span class="ml-metric-label">規則數量</span>';
+            html += `<span class="ml-metric-value">${tree.rules.length} 條</span>`;
+            html += '</div>';
+
+            // 顯示主要規則
+            html += '<div style="margin-top: 15px;"><strong>主要規則 (Top 3):</strong></div>';
+            html += '<div class="decision-tree">';
+            tree.rules
+                .sort((a,b) => b.confidence - a.confidence)
+                .slice(0, 3)
+                .forEach(rule => {
+                    html += `<div class="tree-node">`;
+                    html += `IF ${rule.condition}<br>`;
+                    html += `<span class="tree-leaf">→ 推薦 ${rule.prediction} (信心度: ${(rule.confidence * 100).toFixed(0)}%)</span>`;
+                    html += `</div>`;
+                });
+            html += '</div>';
+
+            html += '</div>';
+            return html;
+        }
+
+        function buildBayesianCard(model) {
+            let html = '<div class="ml-model-card">';
+            html += '<div class="ml-model-header">';
+            html += '<div class="ml-model-title">📊 貝氏分類器</div>';
+            html += `<div class="ml-model-status ml-status-ready">準確率 ${(model.accuracy * 100).toFixed(1)}%</div>`;
+            html += '</div>';
+            
+            html += '<div style="color: #666; font-size: 13px; margin-bottom: 15px;">基於條件機率的智能預測</div>';
+            
+            html += '<div class="ml-metric">';
+            html += '<span class="ml-metric-label">訓練樣本數</span>';
+            html += `<span class="ml-metric-value">${model.totalSamples} 局</span>`;
+            html += '</div>';
+
+            html += '<div class="ml-metric">';
+            html += '<span class="ml-metric-label">特徵維度</span>';
+            html += `<span class="ml-metric-value">中間格數字, 角落總和</span>`;
+            html += '</div>';
+
+            // 顯示線路先驗機率
+            html += '<div style="margin-top: 15px;"><strong>線路先驗機率:</strong></div>';
+            html += '<table class="frequency-table" style="font-size: 12px;"><thead><tr><th>線路</th><th>機率</th></tr></thead><tbody>';
+            Object.entries(model.lineProbabilities)
+                .sort((a,b) => b[1] - a[1])
+                .slice(0, 5)
+                .forEach(([line, prob]) => {
+                    html += `<tr><td>${line}</td><td>${(prob * 100).toFixed(1)}%</td></tr>`;
+                });
+            html += '</tbody></table>';
+
+            html += '</div>';
+            return html;
+        }
+
+        function buildLogisticCard(model) {
+            let html = '<div class="ml-model-card">';
+            html += '<div class="ml-model-header">';
+            html += '<div class="ml-model-title">📈 邏輯迴歸模型</div>';
+            html += `<div class="ml-model-status ml-status-ready">準確率 ${(model.accuracy * 100).toFixed(1)}%</div>`;
+            html += '</div>';
+            
+            html += '<div style="color: #666; font-size: 13px; margin-bottom: 15px;">基於權重評分的線性預測</div>';
+            
+            html += '<div class="ml-metric">';
+            html += '<span class="ml-metric-label">訓練樣本數</span>';
+            html += `<span class="ml-metric-value">${model.totalSamples} 局</span>`;
+            html += '</div>';
+
+            html += '<div style="margin-top: 15px; color: #666; font-size: 13px;">';
+            html += '使用線性權重組合預測最佳線路，適合捕捉簡單的線性關係';
+            html += '</div>';
+
+            html += '</div>';
+            return html;
+        }
+
+        function buildEnsembleCard(models) {
+            // 集成學習：綜合所有模型的預測
+            const avgAccuracy = (models.decisionTree.accuracy + models.bayesian.accuracy + models.logistic.accuracy) / 3;
+            
+            let html = '<div class="ml-model-card" style="border-color: #2ecc71; background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 50%);">';
+            html += '<div class="ml-model-header">';
+            html += '<div class="ml-model-title">🎯 集成學習 (推薦)</div>';
+            html += `<div class="ml-model-status ml-status-ready">準確率 ${(avgAccuracy * 100).toFixed(1)}%</div>`;
+            html += '</div>';
+            
+            html += '<div style="color: #666; font-size: 13px; margin-bottom: 15px;">綜合所有模型的投票結果</div>';
+            
+            html += '<div style="margin-top: 15px;">';
+            html += '<strong>📋 模型權重配置:</strong><br>';
+            html += '• 決策樹: 30%<br>';
+            html += '• 貝氏分類: 40%<br>';
+            html += '• 邏輯迴歸: 30%<br>';
+            html += '</div>';
+
+            html += '<div style="margin-top: 15px; padding: 15px; background: white; border-radius: 8px;">';
+            html += '<strong>💡 使用建議:</strong><br>';
+            html += '集成學習通常比單一模型更穩定可靠。在遊戲中可優先參考此模型的推薦。';
+            html += '</div>';
+
+            html += '</div>';
+            return html;
+        }
+
+        function buildAccuracyComparisonCard(models) {
+            let html = '<div class="ml-model-card">';
+            html += '<div class="ml-model-title" style="margin-bottom: 15px;">📊 模型準確度對比</div>';
+            
+            const modelAccuracies = [
+                { name: '決策樹', accuracy: models.decisionTree.accuracy, color: '#3498db' },
+                { name: '貝氏分類', accuracy: models.bayesian.accuracy, color: '#9b59b6' },
+                { name: '邏輯迴歸', accuracy: models.logistic.accuracy, color: '#e67e22' }
+            ];
+
+            modelAccuracies.forEach(model => {
+                const percent = (model.accuracy * 100).toFixed(1);
+                html += `<div style="margin: 10px 0;">`;
+                html += `<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">`;
+                html += `<span style="font-weight: bold; color: ${model.color};">${model.name}</span>`;
+                html += `<span style="font-weight: bold;">${percent}%</span>`;
+                html += `</div>`;
+                html += `<div style="height: 20px; background: #e0e0e0; border-radius: 10px; overflow: hidden;">`;
+                html += `<div style="width: ${percent}%; height: 100%; background: ${model.color}; transition: width 0.5s;"></div>`;
+                html += `</div>`;
+                html += `</div>`;
+            });
+
+            html += '<div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; font-size: 13px; color: #666;">';
+            html += '<strong>評估指標說明:</strong><br>';
+            html += '準確率 = 模型預測正確的次數 / 總預測次數<br>';
+            html += '• ≥70%: 優秀<br>';
+            html += '• 50-70%: 良好<br>';
+            html += '• <50%: 需要更多數據';
+            html += '</div>';
+
+            html += '</div>';
+            return html;
         }
 
         function displayResults(results, availableNumbers) {
@@ -1481,6 +3881,9 @@
                 
                 // 找出不同策略的推薦
                 const strategies = calculateStrategies(uncertainLines);
+                
+                // 在格子上顯示策略
+                visualizeStrategiesOnGrid(strategies);
                 
                 html += '<div style="display: grid; gap: 15px;">';
                 
@@ -1759,6 +4162,82 @@
             }
 
             return strategies;
+        }
+
+        function visualizeStrategiesOnGrid(strategies) {
+            // 清除所有策略class
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.classList.remove('strategy-balanced', 'strategy-conservative', 
+                    'strategy-aggressive', 'strategy-learned', 'strategy-multiple');
+            });
+
+            // 收集每條線推薦的格子
+            const lineToStrategy = {};
+            lineToStrategy[strategies.balanced.name] = 'balanced';
+            lineToStrategy[strategies.conservative.name] = 'conservative';
+            lineToStrategy[strategies.aggressive.name] = 'aggressive';
+            if (strategies.learned) {
+                lineToStrategy[strategies.learned.name] = 'learned';
+            }
+
+            // 定義線的格子
+            const lineDefinitions = {
+                '第1橫列': [[0,0], [0,1], [0,2]],
+                '第2橫列': [[1,0], [1,1], [1,2]],
+                '第3橫列': [[2,0], [2,1], [2,2]],
+                '第1直列': [[0,0], [1,0], [2,0]],
+                '第2直列': [[0,1], [1,1], [2,1]],
+                '第3直列': [[0,2], [1,2], [2,2]],
+                '左斜線': [[0,0], [1,1], [2,2]],
+                '右斜線': [[0,2], [1,1], [2,0]]
+            };
+
+            // 統計每個格子被多少種策略推薦
+            const cellStrategies = {};
+            for (let r = 0; r < 3; r++) {
+                for (let c = 0; c < 3; c++) {
+                    cellStrategies[`${r},${c}`] = [];
+                }
+            }
+
+            // 收集每個格子的策略
+            Object.entries(lineToStrategy).forEach(([lineName, strategy]) => {
+                const cells = lineDefinitions[lineName];
+                if (cells) {
+                    cells.forEach(([r, c]) => {
+                        cellStrategies[`${r},${c}`].push(strategy);
+                    });
+                }
+            });
+
+            // 應用視覺化
+            document.querySelectorAll('.cell').forEach(cell => {
+                const row = parseInt(cell.dataset.row);
+                const col = parseInt(cell.dataset.col);
+                const key = `${row},${col}`;
+                const strategies = cellStrategies[key];
+
+                if (strategies.length === 0) {
+                    // 不在任何推薦線上
+                    return;
+                } else if (strategies.length === 1) {
+                    // 只有一種策略推薦
+                    cell.classList.add(`strategy-${strategies[0]}`);
+                } else {
+                    // 多種策略都推薦 - 用金色高亮
+                    cell.classList.add('strategy-multiple');
+                }
+            });
+
+            // 顯示圖例
+            const legendDiv = document.getElementById('strategyLegend');
+            legendDiv.style.display = 'flex';
+            
+            if (strategies.learned) {
+                document.getElementById('learnedLegend').style.display = 'flex';
+            } else {
+                document.getElementById('learnedLegend').style.display = 'none';
+            }
         }
 
         function enableFillMode() {
