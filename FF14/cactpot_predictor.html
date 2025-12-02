@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FF14 仙人巨獎彩選號預測器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .section h2 {
+            color: #764ba2;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .number-input {
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            text-align: center;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+        .number-input:focus {
+            outline: none;
+            border-color: #764ba2;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .history-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .history-item {
+            background: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 2px solid #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .history-number {
+            font-size: 20px;
+            font-weight: bold;
+            color: #764ba2;
+            letter-spacing: 3px;
+        }
+
+        .delete-btn {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .stat-box {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #e0e0e0;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-count {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .stat-bar {
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .stat-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+        }
+
+        .recommendation {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+            border: 3px solid #667eea;
+        }
+
+        .recommendation h3 {
+            color: #764ba2;
+            margin-bottom: 10px;
+        }
+
+        .recommended-numbers {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .rec-number {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .strategy-select {
+            padding: 10px;
+            border-radius: 8px;
+            border: 2px solid #667eea;
+            font-size: 16px;
+            margin-bottom: 15px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .info-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .info-box p {
+            color: #856404;
+            line-height: 1.6;
+        }
+
+        .position-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .position-box {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #667eea;
+        }
+
+        .position-title {
+            font-weight: bold;
+            color: #764ba2;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .position-numbers {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .position-number-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎰 FF14 仙人巨獎彩選號預測器</h1>
+        <p class="subtitle">基於歷史數據的智能選號推薦系統</p>
+
+        <!-- 輸入歷史開獎 -->
+        <div class="section">
+            <h2>📝 輸入歷史開獎號碼</h2>
+            <div class="input-group">
+                <input type="number" class="number-input" id="digit1" min="0" max="9" placeholder="0">
+                <input type="number" class="number-input" id="digit2" min="0" max="9" placeholder="0">
+                <input type="number" class="number-input" id="digit3" min="0" max="9" placeholder="0">
+                <input type="number" class="number-input" id="digit4" min="0" max="9" placeholder="0">
+                <button onclick="addHistory()">➕ 新增記錄</button>
+                <button onclick="clearHistory()" style="background: #ff4757;">🗑️ 清空全部</button>
+            </div>
+            <div class="history-list" id="historyList"></div>
+        </div>
+
+        <!-- 統計分析 -->
+        <div class="section">
+            <h2>📊 數字出現頻率統計</h2>
+            <div class="stats-grid" id="statsGrid"></div>
+        </div>
+
+        <!-- 位置統計 -->
+        <div class="section">
+            <h2>🎯 各位置數字分析</h2>
+            <div class="position-stats" id="positionStats"></div>
+        </div>
+
+        <!-- 選號推薦 -->
+        <div class="section">
+            <h2>💡 智能選號推薦</h2>
+            <select class="strategy-select" id="strategySelect" onchange="generateRecommendation()">
+                <option value="hot">熱門號碼策略 - 選擇出現最頻繁的數字</option>
+                <option value="cold">冷門號碼策略 - 選擇較少出現的數字</option>
+                <option value="balanced">平衡策略 - 混合熱門和冷門數字</option>
+                <option value="position">位置優化策略 - 基於各位置的熱門數字</option>
+                <option value="random">隨機策略 - 完全隨機選號</option>
+            </select>
+            <button onclick="generateRecommendation()">🎲 生成推薦號碼</button>
+            <div id="recommendationArea"></div>
+            <div class="info-box">
+                <p><strong>💡 提醒：</strong>仙人巨獎彩是完全隨機的遊戲，任何預測方法都無法真正提高中獎率。此工具僅基於歷史數據提供趣味性的選號參考，請理性遊戲！</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 歷史記錄存儲
+        let history = JSON.parse(localStorage.getItem('cactpotHistory') || '[]');
+
+        // 頁面載入時更新顯示
+        window.onload = function() {
+            updateDisplay();
+        };
+
+        // 添加自動跳轉到下一個輸入框
+        document.querySelectorAll('.number-input').forEach((input, index) => {
+            input.addEventListener('input', function() {
+                if (this.value.length >= 1) {
+                    const nextInput = document.querySelectorAll('.number-input')[index + 1];
+                    if (nextInput) {
+                        nextInput.focus();
+                    }
+                }
+            });
+        });
+
+        // 新增歷史記錄
+        function addHistory() {
+            const d1 = document.getElementById('digit1').value;
+            const d2 = document.getElementById('digit2').value;
+            const d3 = document.getElementById('digit3').value;
+            const d4 = document.getElementById('digit4').value;
+
+            if (d1 === '' || d2 === '' || d3 === '' || d4 === '') {
+                alert('請輸入完整的4位數字！');
+                return;
+            }
+
+            const number = d1 + d2 + d3 + d4;
+            history.unshift(number);
+            localStorage.setItem('cactpotHistory', JSON.stringify(history));
+
+            // 清空輸入框
+            document.getElementById('digit1').value = '';
+            document.getElementById('digit2').value = '';
+            document.getElementById('digit3').value = '';
+            document.getElementById('digit4').value = '';
+            document.getElementById('digit1').focus();
+
+            updateDisplay();
+        }
+
+        // 刪除單筆記錄
+        function deleteHistory(index) {
+            history.splice(index, 1);
+            localStorage.setItem('cactpotHistory', JSON.stringify(history));
+            updateDisplay();
+        }
+
+        // 清空所有記錄
+        function clearHistory() {
+            if (confirm('確定要清空所有歷史記錄嗎？')) {
+                history = [];
+                localStorage.setItem('cactpotHistory', JSON.stringify(history));
+                updateDisplay();
+            }
+        }
+
+        // 更新顯示
+        function updateDisplay() {
+            updateHistoryList();
+            updateStats();
+            updatePositionStats();
+        }
+
+        // 更新歷史列表
+        function updateHistoryList() {
+            const listDiv = document.getElementById('historyList');
+            if (history.length === 0) {
+                listDiv.innerHTML = '<p style="color: #666;">尚無歷史記錄，請開始輸入開獎號碼</p>';
+                return;
+            }
+
+            listDiv.innerHTML = history.map((num, index) => `
+                <div class="history-item">
+                    <span class="history-number">${num}</span>
+                    <button class="delete-btn" onclick="deleteHistory(${index})">✕</button>
+                </div>
+            `).join('');
+        }
+
+        // 更新統計數據
+        function updateStats() {
+            const statsDiv = document.getElementById('statsGrid');
+            
+            if (history.length === 0) {
+                statsDiv.innerHTML = '<p style="color: #666; grid-column: 1/-1;">需要至少一筆歷史記錄才能顯示統計</p>';
+                return;
+            }
+
+            // 統計每個數字出現次數
+            const counts = {};
+            for (let i = 0; i <= 9; i++) {
+                counts[i] = 0;
+            }
+
+            history.forEach(num => {
+                for (let digit of num) {
+                    counts[digit]++;
+                }
+            });
+
+            const maxCount = Math.max(...Object.values(counts));
+
+            statsDiv.innerHTML = Object.entries(counts)
+                .map(([num, count]) => {
+                    const percentage = maxCount > 0 ? (count / maxCount) * 100 : 0;
+                    return `
+                        <div class="stat-box">
+                            <div class="stat-number">${num}</div>
+                            <div class="stat-count">${count} 次</div>
+                            <div class="stat-bar">
+                                <div class="stat-bar-fill" style="width: ${percentage}%"></div>
+                            </div>
+                        </div>
+                    `;
+                })
+                .join('');
+        }
+
+        // 更新位置統計
+        function updatePositionStats() {
+            const positionDiv = document.getElementById('positionStats');
+            
+            if (history.length === 0) {
+                positionDiv.innerHTML = '<p style="color: #666; grid-column: 1/-1;">需要至少一筆歷史記錄才能顯示位置分析</p>';
+                return;
+            }
+
+            const positions = [{}, {}, {}, {}];
+            
+            history.forEach(num => {
+                for (let i = 0; i < 4; i++) {
+                    const digit = num[i];
+                    positions[i][digit] = (positions[i][digit] || 0) + 1;
+                }
+            });
+
+            positionDiv.innerHTML = positions.map((pos, index) => {
+                const sorted = Object.entries(pos)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 5);
+                
+                return `
+                    <div class="position-box">
+                        <div class="position-title">第 ${index + 1} 位</div>
+                        <div class="position-numbers">
+                            ${sorted.map(([num, count]) => `
+                                <div class="position-number-item">
+                                    <span style="font-weight: bold; color: #667eea;">${num}</span>
+                                    <span style="color: #666;">${count}次</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 生成推薦號碼
+        function generateRecommendation() {
+            const strategy = document.getElementById('strategySelect').value;
+            const recArea = document.getElementById('recommendationArea');
+
+            if (history.length === 0 && strategy !== 'random') {
+                alert('請先輸入一些歷史記錄！');
+                return;
+            }
+
+            let recommended = [];
+            let explanation = '';
+
+            switch(strategy) {
+                case 'hot':
+                    recommended = getHotNumbers();
+                    explanation = '基於歷史數據，選擇出現頻率最高的數字組合';
+                    break;
+                case 'cold':
+                    recommended = getColdNumbers();
+                    explanation = '選擇歷史中較少出現的數字，也許是時候該它們出現了！';
+                    break;
+                case 'balanced':
+                    recommended = getBalancedNumbers();
+                    explanation = '混合熱門和冷門數字，取得平衡';
+                    break;
+                case 'position':
+                    recommended = getPositionBasedNumbers();
+                    explanation = '根據每個位置最常出現的數字進行組合';
+                    break;
+                case 'random':
+                    recommended = getRandomNumbers();
+                    explanation = '完全隨機選擇，靠運氣決定！';
+                    break;
+            }
+
+            recArea.innerHTML = `
+                <div class="recommendation">
+                    <h3>推薦號碼</h3>
+                    <div class="recommended-numbers">
+                        ${recommended.map(n => `<div class="rec-number">${n}</div>`).join('')}
+                    </div>
+                    <p style="text-align: center; color: #666;">${explanation}</p>
+                </div>
+            `;
+        }
+
+        // 熱門號碼策略
+        function getHotNumbers() {
+            const counts = {};
+            for (let i = 0; i <= 9; i++) counts[i] = 0;
+            
+            history.forEach(num => {
+                for (let digit of num) counts[digit]++;
+            });
+
+            const sorted = Object.entries(counts)
+                .sort((a, b) => b[1] - a[1])
+                .map(([num]) => num);
+
+            return [sorted[0], sorted[1], sorted[2], sorted[3]];
+        }
+
+        // 冷門號碼策略
+        function getColdNumbers() {
+            const counts = {};
+            for (let i = 0; i <= 9; i++) counts[i] = 0;
+            
+            history.forEach(num => {
+                for (let digit of num) counts[digit]++;
+            });
+
+            const sorted = Object.entries(counts)
+                .sort((a, b) => a[1] - b[1])
+                .map(([num]) => num);
+
+            return [sorted[0], sorted[1], sorted[2], sorted[3]];
+        }
+
+        // 平衡策略
+        function getBalancedNumbers() {
+            const counts = {};
+            for (let i = 0; i <= 9; i++) counts[i] = 0;
+            
+            history.forEach(num => {
+                for (let digit of num) counts[digit]++;
+            });
+
+            const sorted = Object.entries(counts)
+                .sort((a, b) => b[1] - a[1])
+                .map(([num]) => num);
+
+            return [sorted[0], sorted[4], sorted[5], sorted[9]];
+        }
+
+        // 位置優化策略
+        function getPositionBasedNumbers() {
+            const positions = [{}, {}, {}, {}];
+            
+            history.forEach(num => {
+                for (let i = 0; i < 4; i++) {
+                    const digit = num[i];
+                    positions[i][digit] = (positions[i][digit] || 0) + 1;
+                }
+            });
+
+            return positions.map(pos => {
+                const sorted = Object.entries(pos)
+                    .sort((a, b) => b[1] - a[1]);
+                return sorted[0] ? sorted[0][0] : Math.floor(Math.random() * 10);
+            });
+        }
+
+        // 隨機策略
+        function getRandomNumbers() {
+            return Array.from({length: 4}, () => Math.floor(Math.random() * 10));
+        }
+    </script>
+</body>
+</html>
