@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FF14 仙人微彩分析器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 800px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 30px;
+            max-width: 300px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            font-size: 36px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background: white;
+            transition: all 0.3s;
+            color: #333;
+        }
+
+        .cell:hover {
+            background: #f0f0f0;
+            transform: scale(1.05);
+        }
+
+        .cell.filled {
+            background: #667eea;
+            color: white;
+            cursor: default;
+        }
+
+        .cell.filled:hover {
+            transform: none;
+        }
+
+        .cell.recommended {
+            border-color: #f39c12;
+            background: #fff9e6;
+            box-shadow: 0 0 20px rgba(243, 156, 18, 0.5);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(243, 156, 18, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(243, 156, 18, 0.8);
+            }
+        }
+
+        .recommendation-box {
+            background: #fff9e6;
+            border: 2px solid #f39c12;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .recommendation-box.show {
+            display: block;
+        }
+
+        .recommendation-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #f39c12;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .recommendation-content {
+            color: #666;
+            font-size: 14px;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .recommendation-reason {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #888;
+            font-style: italic;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .number-btn {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            background: white;
+            color: #667eea;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .number-btn:hover:not(:disabled) {
+            background: #667eea;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .number-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-analyze {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-analyze:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-reset {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-reset:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+        }
+
+        .results {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            display: none;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .result-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .line-result {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #ddd;
+            transition: all 0.3s;
+        }
+
+        .line-result:hover {
+            transform: translateX(5px);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .line-result.best {
+            border-left-color: #2ecc71;
+            background: #e8f8f0;
+        }
+
+        .line-result.confirmed {
+            border-left-color: #3498db;
+            background: #e3f2fd;
+        }
+
+        .line-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .line-details {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .line-reward {
+            color: #e74c3c;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .badge-best {
+            background: #2ecc71;
+            color: white;
+        }
+
+        .badge-confirmed {
+            background: #3498db;
+            color: white;
+        }
+
+        .instruction {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #fff3cd;
+            border-radius: 10px;
+        }
+
+        .detailed-stats {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+            padding: 5px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            color: #333;
+            font-weight: bold;
+        }
+
+        .probability-bar {
+            margin-top: 8px;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .probability-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2ecc71, #27ae60);
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .possible-outcomes {
+            margin-top: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .outcome-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            font-size: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .outcome-item:last-child {
+            border-bottom: none;
+        }
+
+        .outcome-combination {
+            color: #666;
+        }
+
+        .outcome-reward {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .summary-section {
+            background: #e8f4f8;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid #3498db;
+        }
+
+        .summary-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #3498db;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .summary-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .summary-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #3498db;
+        }
+
+        .toggle-details {
+            cursor: pointer;
+            color: #667eea;
+            font-size: 12px;
+            text-align: center;
+            margin-top: 10px;
+            user-select: none;
+        }
+
+        .toggle-details:hover {
+            text-decoration: underline;
+        }
+
+        .details-content {
+            display: none;
+        }
+
+        .details-content.show {
+            display: block;
+        }
+
+        .history-section {
+            background: #f0f4ff;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .history-section.show {
+            display: block;
+        }
+
+        .history-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 15px;
+            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            justify-content: center;
+        }
+
+        .btn-small {
+            padding: 6px 15px;
+            font-size: 13px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-history {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-history:hover {
+            background: #5568d3;
+        }
+
+        .btn-clear {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-clear:hover {
+            background: #7f8c8d;
+        }
+
+        .history-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid #e0e0e0;
+        }
+
+        .stat-card-label {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-card-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .history-list {
+            max-height: 300px;
+            overflow-y: auto;
+            background: white;
+            border-radius: 10px;
+            padding: 10px;
+        }
+
+        .history-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            font-size: 13px;
+        }
+
+        .history-item.success {
+            border-left-color: #2ecc71;
+            background: #e8f8f0;
+        }
+
+        .history-item.good {
+            border-left-color: #3498db;
+            background: #e3f2fd;
+        }
+
+        .history-item-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .history-item-detail {
+            color: #666;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .insights-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .insights-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .insight-item {
+            font-size: 13px;
+            color: #856404;
+            margin: 5px 0;
+            padding-left: 15px;
+            position: relative;
+        }
+
+        .insight-item:before {
+            content: "💡";
+            position: absolute;
+            left: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌵 FF14 仙人微彩分析器</h1>
+        <p class="subtitle">Mini Cactpot Analyzer</p>
+        
+        <div class="instruction">
+            遊戲開始時會顯示1個數字,你可以選擇翻開3個位置。填入這4個已知數字後點擊「分析」
+        </div>
+
+        <div class="recommendation-box" id="recommendationBox">
+            <div class="recommendation-title">💡 建議翻開位置</div>
+            <div class="recommendation-content" id="recommendationContent"></div>
+        </div>
+
+        <div class="grid-container" id="grid">
+            <div class="cell" data-row="0" data-col="0">?</div>
+            <div class="cell" data-row="0" data-col="1">?</div>
+            <div class="cell" data-row="0" data-col="2">?</div>
+            <div class="cell" data-row="1" data-col="0">?</div>
+            <div class="cell" data-row="1" data-col="1">?</div>
+            <div class="cell" data-row="1" data-col="2">?</div>
+            <div class="cell" data-row="2" data-col="0">?</div>
+            <div class="cell" data-row="2" data-col="1">?</div>
+            <div class="cell" data-row="2" data-col="2">?</div>
+        </div>
+
+        <div class="controls" id="numberControls">
+            <button class="number-btn" data-number="1">1</button>
+            <button class="number-btn" data-number="2">2</button>
+            <button class="number-btn" data-number="3">3</button>
+            <button class="number-btn" data-number="4">4</button>
+            <button class="number-btn" data-number="5">5</button>
+            <button class="number-btn" data-number="6">6</button>
+            <button class="number-btn" data-number="7">7</button>
+            <button class="number-btn" data-number="8">8</button>
+            <button class="number-btn" data-number="9">9</button>
+        </div>
+
+        <div class="action-btns">
+            <button class="btn btn-analyze" onclick="analyze()">🔍 分析最佳路線</button>
+            <button class="btn btn-reset" onclick="reset()">🔄 重置</button>
+        </div>
+
+        <div class="results" id="results"></div>
+
+        <div class="history-section" id="historySection">
+            <div class="history-title">
+                <span>📊 歷史記錄與學習</span>
+            </div>
+            
+            <div class="history-controls">
+                <button class="btn-small btn-history" onclick="toggleHistory()">顯示/隱藏歷史</button>
+                <button class="btn-small btn-clear" onclick="clearHistory()">清除歷史</button>
+            </div>
+
+            <div id="historyContent" style="display: none;">
+                <div class="history-stats" id="historyStats"></div>
+                <div class="insights-box" id="insightsBox" style="display: none;"></div>
+                <div class="history-list" id="historyList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const PAYOUTS = {
+            6: 10000, 7: 36, 8: 720, 9: 360, 10: 80,
+            11: 252, 12: 108, 13: 72, 14: 54, 15: 180,
+            16: 72, 17: 180, 18: 119, 19: 36, 20: 306,
+            21: 1080, 22: 144, 23: 1800, 24: 3600
+        };
+
+        let grid = Array(3).fill(null).map(() => Array(3).fill(null));
+        let selectedCell = null;
+        let usedNumbers = new Set();
+        let gameHistory = JSON.parse(localStorage.getItem('cactpotHistory') || '[]');
+        let currentRecommendedLine = null;
+
+        // 初始化格子點擊事件
+        document.querySelectorAll('.cell').forEach(cell => {
+            cell.addEventListener('click', function() {
+                if (this.classList.contains('filled')) return;
+                
+                document.querySelectorAll('.cell').forEach(c => c.style.border = '3px solid #667eea');
+                this.style.border = '3px solid #e74c3c';
+                selectedCell = this;
+            });
+        });
+
+        // 初始化數字按鈕點擊事件
+        document.querySelectorAll('.number-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (this.disabled || !selectedCell) return;
+                
+                const number = parseInt(this.dataset.number);
+                const row = parseInt(selectedCell.dataset.row);
+                const col = parseInt(selectedCell.dataset.col);
+                
+                grid[row][col] = number;
+                selectedCell.textContent = number;
+                selectedCell.classList.add('filled');
+                selectedCell.style.border = '3px solid #667eea';
+                
+                usedNumbers.add(number);
+                this.disabled = true;
+                
+                selectedCell = null;
+
+                // 更新推薦
+                updateRecommendation();
+            });
+        });
+
+        function updateRecommendation() {
+            const filledCount = usedNumbers.size;
+            const recommendationBox = document.getElementById('recommendationBox');
+            const recommendationContent = document.getElementById('recommendationContent');
+
+            // 移除之前的推薦高亮
+            document.querySelectorAll('.cell.recommended').forEach(cell => {
+                cell.classList.remove('recommended');
+            });
+
+            if (filledCount === 0) {
+                // 遊戲開始前的提示
+                recommendationBox.classList.add('show');
+                recommendationContent.innerHTML = `
+                    <strong>請先填入遊戲開始時顯示的數字</strong>
+                    <div class="recommendation-reason">遊戲會隨機顯示一個位置的數字</div>
+                `;
+                return;
+            }
+
+            if (filledCount >= 4) {
+                recommendationBox.classList.remove('show');
+                recommendationContent.innerHTML = '已填入4個數字(初始1個+翻開3個)，可以點擊「分析」查看結果！';
+                return;
+            }
+
+            const recommendation = getNextRecommendation();
+            if (recommendation) {
+                recommendationBox.classList.add('show');
+                
+                // 高亮推薦的格子
+                const cells = document.querySelectorAll('.cell');
+                cells.forEach(cell => {
+                    const row = parseInt(cell.dataset.row);
+                    const col = parseInt(cell.dataset.col);
+                    if (recommendation.positions.some(pos => pos[0] === row && pos[1] === col)) {
+                        cell.classList.add('recommended');
+                    }
+                });
+
+                // 顯示推薦內容
+                let posText = recommendation.positions.map(pos => {
+                    const rowNames = ['上', '中', '下'];
+                    const colNames = ['左', '中', '右'];
+                    return `${rowNames[pos[0]]}${colNames[pos[1]]}`;
+                }).join(' 或 ');
+
+                const remainingFlips = 4 - filledCount;
+                recommendationContent.innerHTML = `
+                    <strong>第${filledCount}次翻開 → 推薦: ${posText}</strong>
+                    <div class="recommendation-reason">${recommendation.reason}</div>
+                    <div class="recommendation-reason">還可以翻開 ${remainingFlips} 個位置</div>
+                `;
+            } else {
+                recommendationBox.classList.remove('show');
+            }
+        }
+
+        function getNextRecommendation() {
+            const filledCount = usedNumbers.size;
+            
+            // 策略：
+            // 初始數字已有(filledCount=1) -> 推薦中間格 (如果中間未填)
+            // 第1次翻開(filledCount=2) -> 推薦角落
+            // 第2次翻開(filledCount=3) -> 根據已知資訊推薦
+            // 第3次翻開(filledCount=4) -> 已完成,不再推薦
+            
+            if (filledCount === 0) {
+                return null; // 等待填入初始數字
+            }
+
+            if (filledCount === 1) {
+                // 檢查中間是否已填(初始數字)
+                if (grid[1][1] !== null) {
+                    // 中間已是初始數字，推薦角落
+                    const corners = [[0,0], [0,2], [2,0], [2,2]];
+                    const emptyCorners = corners.filter(([r,c]) => grid[r][c] === null);
+                    if (emptyCorners.length > 0) {
+                        return {
+                            positions: emptyCorners,
+                            reason: '中間已知，角落格參與3條線，是次佳選擇'
+                        };
+                    }
+                } else {
+                    // 中間未填，強烈推薦翻開中間
+                    return {
+                        positions: [[1, 1]],
+                        reason: '中間格參與最多條線(4條)，資訊價值最高'
+                    };
+                }
+            }
+
+            if (filledCount === 2) {
+                // 已有初始數字+第1次翻開，推薦第2次翻開位置
+                // 優先選擇角落(如果還有空的)
+                const corners = [[0,0], [0,2], [2,0], [2,2]];
+                const emptyCorners = corners.filter(([r,c]) => grid[r][c] === null);
+                
+                if (emptyCorners.length > 0 && grid[1][1] !== null) {
+                    // 如果中間已知且還有空角落
+                    return {
+                        positions: emptyCorners,
+                        reason: '角落格參與3條線，配合已知資訊最有價值'
+                    };
+                } else if (grid[1][1] === null) {
+                    // 如果中間還是空的，必須翻中間
+                    return {
+                        positions: [[1, 1]],
+                        reason: '中間格參與最多條線(4條)，必須翻開'
+                    };
+                } else {
+                    // 否則選擇參與最多「部分已知」線的格子
+                    return getIntelligentRecommendation();
+                }
+            }
+
+            if (filledCount === 3) {
+                // 最後一次翻開，做智能分析
+                return getIntelligentRecommendation();
+            }
+
+            return null;
+        }
+
+        function getIntelligentRecommendation() {
+            const lines = [
+                {name: '第1橫列', cells: [[0,0], [0,1], [0,2]]},
+                {name: '第2橫列', cells: [[1,0], [1,1], [1,2]]},
+                {name: '第3橫列', cells: [[2,0], [2,1], [2,2]]},
+                {name: '第1直列', cells: [[0,0], [1,0], [2,0]]},
+                {name: '第2直列', cells: [[0,1], [1,1], [2,1]]},
+                {name: '第3直列', cells: [[0,2], [1,2], [2,2]]},
+                {name: '左斜線', cells: [[0,0], [1,1], [2,2]]},
+                {name: '右斜線', cells: [[0,2], [1,1], [2,0]]}
+            ];
+
+            let bestScore = -1;
+            let bestPositions = [];
+
+            // 評估每個未填的格子
+            for (let r = 0; r < 3; r++) {
+                for (let c = 0; c < 3; c++) {
+                    if (grid[r][c] !== null) continue;
+
+                    // 計算這個格子的價值分數
+                    let score = 0;
+                    lines.forEach(line => {
+                        if (line.cells.some(([lr, lc]) => lr === r && lc === c)) {
+                            const values = line.cells.map(([lr,lc]) => grid[lr][lc]);
+                            const knownCount = values.filter(v => v !== null).length;
+                            // 有1-2個已知數字的線更有價值(可以幫助判斷潛力)
+                            if (knownCount >= 1 && knownCount < 3) {
+                                score += knownCount * 3;
+                            }
+                            score += 1; // 基礎分:參與線的數量
+                        }
+                    });
+
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestPositions = [[r, c]];
+                    } else if (score === bestScore) {
+                        bestPositions.push([r, c]);
+                    }
+                }
+            }
+
+            if (bestPositions.length > 0) {
+                return {
+                    positions: bestPositions,
+                    reason: '這些位置能提供最多有價值的資訊來判斷最佳路線'
+                };
+            }
+
+            return null;
+        }
+
+        function reset() {
+            grid = Array(3).fill(null).map(() => Array(3).fill(null));
+            usedNumbers.clear();
+            selectedCell = null;
+            
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.textContent = '?';
+                cell.classList.remove('filled');
+                cell.classList.remove('recommended');
+                cell.style.border = '3px solid #667eea';
+            });
+            
+            document.querySelectorAll('.number-btn').forEach(btn => {
+                btn.disabled = false;
+            });
+            
+            document.getElementById('results').classList.remove('show');
+            document.getElementById('recommendationBox').classList.remove('show');
+            
+            // 顯示初始推薦
+            updateRecommendation();
+        }
+
+        function analyze() {
+            const filledCount = usedNumbers.size;
+            if (filledCount === 0) {
+                alert('請至少填入一個數字！');
+                return;
+            }
+
+            const lines = [
+                {name: '第1橫列', cells: [[0,0], [0,1], [0,2]]},
+                {name: '第2橫列', cells: [[1,0], [1,1], [1,2]]},
+                {name: '第3橫列', cells: [[2,0], [2,1], [2,2]]},
+                {name: '第1直列', cells: [[0,0], [1,0], [2,0]]},
+                {name: '第2直列', cells: [[0,1], [1,1], [2,1]]},
+                {name: '第3直列', cells: [[0,2], [1,2], [2,2]]},
+                {name: '左斜線', cells: [[0,0], [1,1], [2,2]]},
+                {name: '右斜線', cells: [[0,2], [1,1], [2,0]]}
+            ];
+
+            const availableNumbers = [1,2,3,4,5,6,7,8,9].filter(n => !usedNumbers.has(n));
+            let results = [];
+
+            lines.forEach(line => {
+                const values = line.cells.map(([r,c]) => grid[r][c]);
+                const unknownCount = values.filter(v => v === null).length;
+                
+                if (unknownCount === 0) {
+                    // 完全已知
+                    const sum = values.reduce((a,b) => a+b, 0);
+                    const reward = PAYOUTS[sum] || 0;
+                    results.push({
+                        ...line,
+                        type: 'confirmed',
+                        values: values,
+                        sum: sum,
+                        reward: reward,
+                        minReward: reward,
+                        maxReward: reward,
+                        avgReward: reward,
+                        medianReward: reward,
+                        possibleOutcomes: [{combination: values, sum: sum, reward: reward}],
+                        probability: 1.0
+                    });
+                } else {
+                    // 有未知數，計算所有可能組合
+                    const knownSum = values.filter(v => v !== null).reduce((a,b) => a+b, 0);
+                    let possibleOutcomes = [];
+                    let rewardCounts = {};
+
+                    if (unknownCount === 1) {
+                        availableNumbers.forEach(num => {
+                            const sum = knownSum + num;
+                            const reward = PAYOUTS[sum] || 0;
+                            const combo = [...values];
+                            const unknownIndex = combo.indexOf(null);
+                            combo[unknownIndex] = num;
+                            possibleOutcomes.push({combination: combo, sum: sum, reward: reward});
+                            rewardCounts[reward] = (rewardCounts[reward] || 0) + 1;
+                        });
+                    } else if (unknownCount === 2) {
+                        for (let i = 0; i < availableNumbers.length; i++) {
+                            for (let j = i + 1; j < availableNumbers.length; j++) {
+                                const sum = knownSum + availableNumbers[i] + availableNumbers[j];
+                                const reward = PAYOUTS[sum] || 0;
+                                const combo = [...values];
+                                let filled = 0;
+                                for (let k = 0; k < combo.length; k++) {
+                                    if (combo[k] === null) {
+                                        combo[k] = filled === 0 ? availableNumbers[i] : availableNumbers[j];
+                                        filled++;
+                                    }
+                                }
+                                possibleOutcomes.push({combination: combo, sum: sum, reward: reward});
+                                rewardCounts[reward] = (rewardCounts[reward] || 0) + 1;
+                            }
+                        }
+                    } else {
+                        // 3個未知數
+                        for (let i = 0; i < availableNumbers.length; i++) {
+                            for (let j = i + 1; j < availableNumbers.length; j++) {
+                                for (let k = j + 1; k < availableNumbers.length; k++) {
+                                    const sum = availableNumbers[i] + availableNumbers[j] + availableNumbers[k];
+                                    const reward = PAYOUTS[sum] || 0;
+                                    const combo = [availableNumbers[i], availableNumbers[j], availableNumbers[k]];
+                                    possibleOutcomes.push({combination: combo, sum: sum, reward: reward});
+                                    rewardCounts[reward] = (rewardCounts[reward] || 0) + 1;
+                                }
+                            }
+                        }
+                    }
+
+                    // 排序結果
+                    possibleOutcomes.sort((a, b) => b.reward - a.reward);
+
+                    const rewards = possibleOutcomes.map(o => o.reward);
+                    const minReward = Math.min(...rewards);
+                    const maxReward = Math.max(...rewards);
+                    const avgReward = Math.round(rewards.reduce((a,b) => a+b, 0) / rewards.length);
+                    
+                    // 計算中位數
+                    const sortedRewards = [...rewards].sort((a,b) => a-b);
+                    const medianReward = sortedRewards.length % 2 === 0 ?
+                        (sortedRewards[sortedRewards.length/2 - 1] + sortedRewards[sortedRewards.length/2]) / 2 :
+                        sortedRewards[Math.floor(sortedRewards.length/2)];
+
+                    // 計算最常見獎勵
+                    const mostCommonReward = Object.entries(rewardCounts)
+                        .sort((a, b) => b[1] - a[1])[0];
+
+                    // 計算獲得高獎勵(>=1000 MGP)的機率
+                    const highRewardCount = rewards.filter(r => r >= 1000).length;
+                    const highRewardProb = highRewardCount / rewards.length;
+
+                    results.push({
+                        ...line,
+                        type: 'unknown',
+                        values: values,
+                        minReward: minReward,
+                        maxReward: maxReward,
+                        avgReward: avgReward,
+                        medianReward: Math.round(medianReward),
+                        possibleOutcomes: possibleOutcomes,
+                        totalOutcomes: possibleOutcomes.length,
+                        mostCommonReward: parseInt(mostCommonReward[0]),
+                        mostCommonCount: mostCommonReward[1],
+                        highRewardProb: highRewardProb
+                    });
+                }
+            });
+
+            // 排序：確定值優先，然後按平均獎勵排序
+            results.sort((a, b) => {
+                if (a.type === 'confirmed' && b.type !== 'confirmed') return -1;
+                if (a.type !== 'confirmed' && b.type === 'confirmed') return 1;
+                return b.avgReward - a.avgReward;
+            });
+
+            displayResults(results, availableNumbers);
+            
+            // 儲存當前推薦的最佳線供記錄使用
+            currentRecommendedLine = results[0];
+        }
+
+        // 頁面載入時顯示初始推薦
+        window.addEventListener('DOMContentLoaded', function() {
+            updateRecommendation();
+            updateHistoryDisplay();
+        });
+
+        function recordResult() {
+            const selectedIndex = parseInt(document.getElementById('selectedLineIndex').value);
+            const actualReward = parseInt(document.getElementById('actualReward').value);
+            
+            // 檢查是否所有格子都已填入
+            const allFilled = grid.flat().every(cell => cell !== null);
+            if (!allFilled) {
+                alert('請先填完所有9個格子!');
+                return;
+            }
+            
+            if (!actualReward || actualReward < 0) {
+                alert('請輸入有效的獎勵金額!');
+                return;
+            }
+
+            // 從當前分析結果中獲取信息
+            const lines = [
+                {name: '第1橫列', cells: [[0,0], [0,1], [0,2]]},
+                {name: '第2橫列', cells: [[1,0], [1,1], [1,2]]},
+                {name: '第3橫列', cells: [[2,0], [2,1], [2,2]]},
+                {name: '第1直列', cells: [[0,0], [1,0], [2,0]]},
+                {name: '第2直列', cells: [[0,1], [1,1], [2,1]]},
+                {name: '第3直列', cells: [[0,2], [1,2], [2,2]]},
+                {name: '左斜線', cells: [[0,0], [1,1], [2,2]]},
+                {name: '右斜線', cells: [[0,2], [1,1], [2,0]]}
+            ];
+
+            const selectedLine = lines[selectedIndex];
+            const selectedValues = selectedLine.cells.map(([r,c]) => grid[r][c]);
+            const selectedSum = selectedValues.reduce((a,b) => a+b, 0);
+            
+            // 計算所有線的實際獎勵
+            const allLinesData = lines.map(line => {
+                const values = line.cells.map(([r,c]) => grid[r][c]);
+                const sum = values.reduce((a,b) => a+b, 0);
+                const reward = PAYOUTS[sum] || 0;
+                return {
+                    name: line.name,
+                    values: values,
+                    sum: sum,
+                    reward: reward
+                };
+            });
+
+            // 找出實際的最佳線
+            const actualBestLine = allLinesData.reduce((best, current) => 
+                current.reward > best.reward ? current : best
+            );
+
+            const record = {
+                timestamp: new Date().toISOString(),
+                fullGrid: grid.map(row => [...row]),
+                allLines: allLinesData,
+                recommendedLine: currentRecommendedLine.name,
+                recommendedReward: currentRecommendedLine.avgReward,
+                selectedLine: selectedLine.name,
+                selectedLineValues: selectedValues,
+                selectedSum: selectedSum,
+                actualReward: actualReward,
+                followedRecommendation: currentRecommendedLine.name === selectedLine.name,
+                actualBestLine: actualBestLine.name,
+                actualBestReward: actualBestLine.reward,
+                isOptimal: actualBestLine.name === selectedLine.name,
+                missedReward: actualBestLine.reward - actualReward
+            };
+
+            gameHistory.push(record);
+            localStorage.setItem('cactpotHistory', JSON.stringify(gameHistory));
+            
+            // 分析推薦準確度
+            const accuracy = analyzeAccuracy();
+            
+            let message = '✅ 結果已記錄!\n\n';
+            if (record.isOptimal) {
+                message += '🎉 恭喜!你選擇了最佳路線!\n';
+            } else {
+                message += `📊 實際最佳線是: ${actualBestLine.name} (${actualBestLine.reward.toLocaleString()} MGP)\n`;
+                message += `差距: ${record.missedReward.toLocaleString()} MGP\n`;
+            }
+            
+            if (accuracy.totalGames >= 5) {
+                message += `\n📈 推薦準確率: ${accuracy.recommendationAccuracy.toFixed(1)}%`;
+            }
+            
+            alert(message);
+            updateHistoryDisplay();
+            document.getElementById('historySection').classList.add('show');
+            document.getElementById('historyContent').style.display = 'block';
+        }
+
+        function analyzeAccuracy() {
+            if (gameHistory.length === 0) return null;
+
+            const totalGames = gameHistory.length;
+            
+            // 推薦的線實際是最佳線的次數
+            const recommendationWasOptimal = gameHistory.filter(r => {
+                return r.allLines.some(line => 
+                    line.name === r.recommendedLine && 
+                    line.reward === r.actualBestReward
+                );
+            }).length;
+
+            // 用戶跟隨推薦時獲得最佳結果的次數
+            const followedAndOptimal = gameHistory.filter(r => 
+                r.followedRecommendation && r.isOptimal
+            ).length;
+
+            const followedCount = gameHistory.filter(r => r.followedRecommendation).length;
+
+            return {
+                totalGames: totalGames,
+                recommendationAccuracy: (recommendationWasOptimal / totalGames) * 100,
+                followedAndOptimalRate: followedCount > 0 ? (followedAndOptimal / followedCount) * 100 : 0,
+                followedCount: followedCount
+            };
+        }
+
+        function updateHistoryDisplay() {
+            if (gameHistory.length === 0) return;
+
+            const statsDiv = document.getElementById('historyStats');
+            const listDiv = document.getElementById('historyList');
+            const insightsBox = document.getElementById('insightsBox');
+
+            // 計算統計數據
+            const totalGames = gameHistory.length;
+            const followedCount = gameHistory.filter(r => r.followedRecommendation).length;
+            const optimalCount = gameHistory.filter(r => r.isOptimal).length;
+            const avgReward = Math.round(gameHistory.reduce((sum, r) => sum + r.actualReward, 0) / totalGames);
+            
+            const avgRewardWhenFollowed = followedCount > 0 ?
+                Math.round(gameHistory.filter(r => r.followedRecommendation)
+                    .reduce((sum, r) => sum + r.actualReward, 0) / followedCount) : 0;
+            
+            const avgRewardWhenNotFollowed = (totalGames - followedCount) > 0 ?
+                Math.round(gameHistory.filter(r => !r.followedRecommendation)
+                    .reduce((sum, r) => sum + r.actualReward, 0) / (totalGames - followedCount)) : 0;
+
+            const totalMissedReward = gameHistory.reduce((sum, r) => sum + (r.missedReward || 0), 0);
+            const accuracy = analyzeAccuracy();
+
+            // 顯示統計卡片
+            statsDiv.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-card-label">總遊戲次數</div>
+                    <div class="stat-card-value">${totalGames}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-label">平均獎勵</div>
+                    <div class="stat-card-value">${avgReward.toLocaleString()}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-label">最佳選擇率</div>
+                    <div class="stat-card-value">${Math.round(optimalCount/totalGames*100)}%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-label">推薦準確率</div>
+                    <div class="stat-card-value">${accuracy.recommendationAccuracy.toFixed(0)}%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-label">跟隨推薦次數</div>
+                    <div class="stat-card-value">${followedCount}/${totalGames}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-label">錯失總獎勵</div>
+                    <div class="stat-card-value" style="color: #e74c3c;">${totalMissedReward.toLocaleString()}</div>
+                </div>
+            `;
+
+            // 顯示洞察分析
+            if (totalGames >= 3) {
+                const insights = [];
+                
+                // 分析推薦效果
+                if (accuracy.recommendationAccuracy >= 70) {
+                    insights.push(`推薦系統準確率達 ${accuracy.recommendationAccuracy.toFixed(1)}%，建議信任推薦`);
+                } else if (accuracy.recommendationAccuracy < 50) {
+                    insights.push(`推薦準確率僅 ${accuracy.recommendationAccuracy.toFixed(1)}%，需要累積更多數據優化`);
+                }
+
+                // 比較跟隨 vs 不跟隨
+                if (followedCount > 0 && (totalGames - followedCount) > 0) {
+                    const diff = avgRewardWhenFollowed - avgRewardWhenNotFollowed;
+                    if (diff > 100) {
+                        insights.push(`跟隨推薦平均多獲得 ${diff.toLocaleString()} MGP，強烈建議採納推薦`);
+                    } else if (diff < -100) {
+                        insights.push(`自行判斷平均多獲得 ${Math.abs(diff).toLocaleString()} MGP，你的直覺很準!`);
+                    } else {
+                        insights.push(`跟隨推薦與自行選擇差異不大 (${Math.abs(diff)} MGP)`);
+                    }
+                }
+
+                // 分析常見錯誤
+                const missedBigRewards = gameHistory.filter(r => (r.missedReward || 0) >= 500);
+                if (missedBigRewards.length > 0) {
+                    insights.push(`有 ${missedBigRewards.length} 次錯失大獎機會 (≥500 MGP差距)`);
+                    
+                    // 分析這些情況的共同點
+                    const missedLines = {};
+                    missedBigRewards.forEach(r => {
+                        const wrongChoice = r.selectedLine;
+                        missedLines[wrongChoice] = (missedLines[wrongChoice] || 0) + 1;
+                    });
+                    const mostMissedLine = Object.entries(missedLines).sort((a,b) => b[1] - a[1])[0];
+                    if (mostMissedLine && mostMissedLine[1] >= 2) {
+                        insights.push(`錯失大獎時最常選 ${mostMissedLine[0]}，建議謹慎選擇此線`);
+                    }
+                }
+
+                // 分析最佳模式
+                const optimalChoices = gameHistory.filter(r => r.isOptimal);
+                if (optimalChoices.length >= 3) {
+                    const optimalLines = {};
+                    optimalChoices.forEach(r => {
+                        optimalLines[r.selectedLine] = (optimalLines[r.selectedLine] || 0) + 1;
+                    });
+                    const bestLine = Object.entries(optimalLines).sort((a,b) => b[1] - a[1])[0];
+                    if (bestLine) {
+                        insights.push(`最佳選擇中 ${bestLine[0]} 出現 ${bestLine[1]} 次，這條線對你來說勝率較高`);
+                    }
+                }
+
+                // 分析數字組合模式
+                if (totalGames >= 5) {
+                    const highRewardGames = gameHistory.filter(r => r.actualReward >= 1000);
+                    if (highRewardGames.length > 0) {
+                        insights.push(`獲得高獎勵 ${highRewardGames.length} 次，勝率 ${Math.round(highRewardGames.length/totalGames*100)}%`);
+                        
+                        // 分析高獎勵時的中間格數字
+                        const centerNumbers = highRewardGames.map(r => r.fullGrid[1][1]);
+                        const centerCount = {};
+                        centerNumbers.forEach(n => centerCount[n] = (centerCount[n] || 0) + 1);
+                        const commonCenter = Object.entries(centerCount).sort((a,b) => b[1] - a[1])[0];
+                        if (commonCenter && commonCenter[1] >= 2) {
+                            insights.push(`高獎勵時中間格常出現 ${commonCenter[0]} (${commonCenter[1]}次)`);
+                        }
+                    }
+                }
+
+                // 最近趨勢
+                if (totalGames >= 5) {
+                    const recent5 = gameHistory.slice(-5);
+                    const recent5Avg = Math.round(recent5.reduce((sum, r) => sum + r.actualReward, 0) / 5);
+                    const recent5Optimal = recent5.filter(r => r.isOptimal).length;
+                    
+                    if (recent5Avg > avgReward * 1.2) {
+                        insights.push(`🔥 最近5局表現優異! 平均 ${recent5Avg.toLocaleString()} MGP，保持狀態!`);
+                    } else if (recent5Avg < avgReward * 0.8) {
+                        insights.push(`⚠️ 最近5局表現下滑，平均 ${recent5Avg.toLocaleString()} MGP，建議更信任推薦`);
+                    }
+                    
+                    if (recent5Optimal >= 4) {
+                        insights.push(`🎯 最近5局有${recent5Optimal}次選擇最佳線，判斷力極佳!`);
+                    }
+                }
+
+                // 學習建議
+                if (totalGames >= 10) {
+                    const recentAccuracy = gameHistory.slice(-10).filter(r => r.isOptimal).length;
+                    const earlyAccuracy = gameHistory.slice(0, Math.min(10, totalGames-10)).filter(r => r.isOptimal).length;
+                    
+                    if (recentAccuracy > earlyAccuracy) {
+                        insights.push(`📈 你的判斷力正在提升! 繼續使用分析器學習`);
+                    }
+                }
+
+                if (insights.length > 0) {
+                    insightsBox.style.display = 'block';
+                    insightsBox.innerHTML = `
+                        <div class="insights-title">🧠 AI 深度分析與學習建議</div>
+                        ${insights.map(insight => `<div class="insight-item">${insight}</div>`).join('')}
+                    `;
+                } else {
+                    insightsBox.style.display = 'none';
+                }
+            }
+
+            // 顯示歷史列表 (最新的在前)
+            const recentHistory = [...gameHistory].reverse().slice(0, 15);
+            listDiv.innerHTML = recentHistory.map(record => {
+                const date = new Date(record.timestamp).toLocaleString('zh-TW', {
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                const isOptimal = record.isOptimal;
+                const isGood = record.actualReward >= 500;
+                const className = isOptimal ? 'success' : (isGood ? 'good' : '');
+                
+                const gridDisplay = record.fullGrid ? 
+                    record.fullGrid.map(row => row.join('-')).join(' | ') : 
+                    record.selectedLineValues.join('-');
+                
+                return `
+                    <div class="history-item ${className}">
+                        <div class="history-item-header">
+                            <span>${record.selectedLine} ${isOptimal ? '🎯' : ''}</span>
+                            <span style="color: #e74c3c;">${record.actualReward.toLocaleString()} MGP</span>
+                        </div>
+                        <div class="history-item-detail">
+                            選擇: ${record.selectedLineValues.join('-')} (和:${record.selectedSum}) | 
+                            ${record.followedRecommendation ? '✓ 採納推薦' : '⚠️ 自行選擇'}
+                        </div>
+                        ${!isOptimal ? `
+                            <div class="history-item-detail" style="color: #e67e22;">
+                                最佳: ${record.actualBestLine} (${record.actualBestReward.toLocaleString()} MGP) | 
+                                錯失: ${record.missedReward.toLocaleString()} MGP
+                            </div>
+                        ` : ''}
+                        <div class="history-item-detail" style="color: #999; font-size: 11px;">
+                            完整: ${gridDisplay}
+                        </div>
+                        <div class="history-item-detail" style="color: #999; font-size: 11px;">
+                            ${date}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            if (gameHistory.length > 15) {
+                listDiv.innerHTML += `<div style="text-align: center; color: #999; padding: 10px; font-size: 12px;">顯示最近15筆記錄，共${totalGames}筆</div>`;
+            }
+        }
+
+        function toggleHistory() {
+            const content = document.getElementById('historyContent');
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                updateHistoryDisplay();
+            } else {
+                content.style.display = 'none';
+            }
+        }
+
+        function clearHistory() {
+            if (confirm('確定要清除所有歷史記錄嗎？')) {
+                gameHistory = [];
+                localStorage.removeItem('cactpotHistory');
+                document.getElementById('historySection').classList.remove('show');
+                alert('✅ 歷史記錄已清除');
+            }
+        }
+
+        function displayResults(results, availableNumbers) {
+            const resultsDiv = document.getElementById('results');
+            
+            // 計算總體統計
+            const bestResult = results[0];
+            const confirmedLines = results.filter(r => r.type === 'confirmed');
+            const uncertainLines = results.filter(r => r.type === 'unknown');
+            
+            let html = '<div class="result-title">📊 詳細分析結果</div>';
+            
+            // 總覽區域
+            html += '<div class="summary-section">';
+            html += '<div class="summary-title">🎯 整體統計</div>';
+            html += '<div class="summary-grid">';
+            html += `<div class="summary-card">
+                <div class="summary-label">最佳選擇</div>
+                <div class="summary-value">${bestResult.name}</div>
+            </div>`;
+            html += `<div class="summary-card">
+                <div class="summary-label">期望獎勵</div>
+                <div class="summary-value">${bestResult.avgReward.toLocaleString()}</div>
+            </div>`;
+            html += `<div class="summary-card">
+                <div class="summary-label">已確定線數</div>
+                <div class="summary-value">${confirmedLines.length}/8</div>
+            </div>`;
+            html += `<div class="summary-card">
+                <div class="summary-label">剩餘數字</div>
+                <div class="summary-value">${availableNumbers.join(', ')}</div>
+            </div>`;
+            html += '</div></div>';
+
+            // 各線詳細分析
+            results.forEach((result, index) => {
+                const isBest = index === 0;
+                const isConfirmed = result.type === 'confirmed';
+                
+                const valuesStr = result.values.map(v => v === null ? '?' : v).join(' - ');
+                
+                let detailsStr = '';
+                if (isConfirmed) {
+                    detailsStr = `<strong>數值:</strong> ${valuesStr} | <strong>總和:</strong> ${result.sum}`;
+                } else {
+                    detailsStr = `<strong>數值:</strong> ${valuesStr}`;
+                }
+
+                const rewardStr = isConfirmed ? 
+                    `${result.reward.toLocaleString()} MGP` : 
+                    `${result.avgReward.toLocaleString()} MGP`;
+
+                const badgeHtml = isBest ? '<span class="badge badge-best">★ 最推薦</span>' : 
+                                 isConfirmed ? '<span class="badge badge-confirmed">✓ 確定</span>' : '';
+
+                html += `
+                    <div class="line-result ${isBest ? 'best' : ''} ${isConfirmed ? 'confirmed' : ''}">
+                        <div class="line-name">${result.name}${badgeHtml}</div>
+                        <div class="line-details">${detailsStr}</div>
+                        <div class="line-reward">期望值: ${rewardStr}</div>
+                `;
+
+                // 詳細統計（僅未確定的線）
+                if (!isConfirmed) {
+                    html += '<div class="detailed-stats">';
+                    
+                    html += `<div class="stat-row">
+                        <span class="stat-label">最小獎勵:</span>
+                        <span class="stat-value">${result.minReward.toLocaleString()} MGP</span>
+                    </div>`;
+                    
+                    html += `<div class="stat-row">
+                        <span class="stat-label">最大獎勵:</span>
+                        <span class="stat-value">${result.maxReward.toLocaleString()} MGP</span>
+                    </div>`;
+                    
+                    html += `<div class="stat-row">
+                        <span class="stat-label">平均獎勵:</span>
+                        <span class="stat-value">${result.avgReward.toLocaleString()} MGP</span>
+                    </div>`;
+                    
+                    html += `<div class="stat-row">
+                        <span class="stat-label">中位數:</span>
+                        <span class="stat-value">${result.medianReward.toLocaleString()} MGP</span>
+                    </div>`;
+                    
+                    html += `<div class="stat-row">
+                        <span class="stat-label">可能結果數:</span>
+                        <span class="stat-value">${result.totalOutcomes} 種</span>
+                    </div>`;
+                    
+                    html += `<div class="stat-row">
+                        <span class="stat-label">最常見獎勵:</span>
+                        <span class="stat-value">${result.mostCommonReward.toLocaleString()} MGP (${result.mostCommonCount}次)</span>
+                    </div>`;
+                    
+                    const highRewardPercent = (result.highRewardProb * 100).toFixed(1);
+                    html += `<div class="stat-row">
+                        <span class="stat-label">高獎勵機率 (≥1000):</span>
+                        <span class="stat-value">${highRewardPercent}%</span>
+                    </div>`;
+                    
+                    // 機率條
+                    html += `<div class="probability-bar">
+                        <div class="probability-fill" style="width: ${highRewardPercent}%">
+                            ${highRewardPercent}%
+                        </div>
+                    </div>`;
+                    
+                    html += '</div>';
+                    
+                    // 可展開的所有可能結果
+                    html += `<div class="toggle-details" onclick="toggleDetails(this)">
+                        ▼ 顯示所有可能結果 (${result.totalOutcomes}種)
+                    </div>`;
+                    
+                    html += '<div class="details-content possible-outcomes">';
+                    
+                    // 只顯示前20個結果，避免過長
+                    const displayCount = Math.min(20, result.possibleOutcomes.length);
+                    for (let i = 0; i < displayCount; i++) {
+                        const outcome = result.possibleOutcomes[i];
+                        const comboStr = outcome.combination.join('-');
+                        html += `<div class="outcome-item">
+                            <span class="outcome-combination">${comboStr} (總和:${outcome.sum})</span>
+                            <span class="outcome-reward">${outcome.reward.toLocaleString()} MGP</span>
+                        </div>`;
+                    }
+                    
+                    if (result.possibleOutcomes.length > displayCount) {
+                        html += `<div class="outcome-item" style="text-align: center; color: #999;">
+                            ... 還有 ${result.possibleOutcomes.length - displayCount} 種結果
+                        </div>`;
+                    }
+                    
+                    html += '</div>';
+                }
+
+                html += '</div>';
+            });
+
+            resultsDiv.innerHTML = html;
+            resultsDiv.classList.add('show');
+            
+            // 加入記錄結果按鈕
+            const allFilled = grid.flat().every(cell => cell !== null);
+            const recordSection = `
+                <div style="text-align: center; margin-top: 20px; padding: 20px; border-top: 2px solid #e0e0e0; background: #f8f9fa; border-radius: 10px;">
+                    <div style="margin-bottom: 15px; color: #333; font-size: 15px; font-weight: bold;">
+                        🎯 記錄遊戲結果
+                    </div>
+                    ${!allFilled ? `
+                        <div style="margin-bottom: 15px; color: #e67e22; font-size: 14px;">
+                            ⚠️ 請先填完所有9個格子(遊戲結束後會顯示完整數字)
+                        </div>
+                        <button class="btn" onclick="enableFillMode()" style="background: #e67e22; color: white; padding: 10px 25px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                            📝 填入剩餘數字
+                        </button>
+                    ` : `
+                        <div style="margin-bottom: 10px; color: #2ecc71; font-size: 14px;">
+                            ✅ 所有格子已填入完畢
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label style="color: #666; font-size: 14px; margin-right: 10px;">你選擇的線:</label>
+                            <select id="selectedLineIndex" style="padding: 8px; border-radius: 8px; border: 2px solid #667eea; margin-right: 10px; font-size: 14px;">
+                                ${results.map((r, i) => `<option value="${i}">${r.name}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label style="color: #666; font-size: 14px; margin-right: 10px;">實際獲得:</label>
+                            <input type="number" id="actualReward" placeholder="MGP" 
+                                   style="padding: 8px; border-radius: 8px; border: 2px solid #667eea; width: 120px; margin-right: 10px; font-size: 14px;">
+                        </div>
+                        <button class="btn btn-history" onclick="recordResult()" style="padding: 10px 30px; background: #2ecc71; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; font-size: 15px;">
+                            ✓ 記錄並優化
+                        </button>
+                    `}
+                </div>
+            `;
+            resultsDiv.innerHTML = html + recordSection;
+            
+            // 顯示歷史區域
+            if (gameHistory.length > 0) {
+                document.getElementById('historySection').classList.add('show');
+            }
+        }
+
+        function enableFillMode() {
+            alert('請繼續填入剩餘的數字。填完後會自動顯示記錄選項。');
+            // 不需要特別做什麼,用戶可以繼續填數字
+        }
+
+        function toggleDetails(element) {
+            const content = element.nextElementSibling;
+            if (content.classList.contains('show')) {
+                content.classList.remove('show');
+                element.textContent = element.textContent.replace('▲', '▼').replace('隱藏', '顯示');
+            } else {
+                content.classList.add('show');
+                element.textContent = element.textContent.replace('▼', '▲').replace('顯示', '隱藏');
+            }
+        }
+    </script>
+</body>
+</html>
