@@ -306,7 +306,7 @@
                 <option value="cold">冷門號碼策略 - 選擇較少出現的數字</option>
                 <option value="balanced">平衡策略 - 混合熱門和冷門數字</option>
                 <option value="position">位置優化策略 - 基於各位置的熱門數字</option>
-                <option value="random">隨機策略 - 完全隨機選號</option>
+                <option value="random">真隨機策略 - 使用密碼學等級隨機數</option>
             </select>
             <button onclick="generateRecommendation()">🎲 生成推薦號碼</button>
             <div id="recommendationArea"></div>
@@ -512,7 +512,7 @@
                     break;
                 case 'random':
                     recommended = getRandomNumbers();
-                    explanation = '完全隨機選擇，靠運氣決定！';
+                    explanation = '使用密碼學等級的真隨機數生成器,更接近真正的隨機!';
                     break;
             }
 
@@ -593,9 +593,14 @@
             });
         }
 
-        // 隨機策略
+        // 隨機策略 - 使用 Crypto API 真隨機數
         function getRandomNumbers() {
-            return Array.from({length: 4}, () => Math.floor(Math.random() * 10));
+            // 使用密碼學等級的隨機數生成器
+            const randomArray = new Uint32Array(4);
+            crypto.getRandomValues(randomArray);
+            
+            // 將隨機數轉換為 0-9 的範圍
+            return Array.from(randomArray, num => num % 10);
         }
     </script>
 </body>
