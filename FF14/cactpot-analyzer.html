@@ -1861,8 +1861,20 @@ https://gist.github.com/username/ghi789..."
         });
 
         function recordResult() {
-            const selectedIndex = parseInt(document.getElementById('selectedLineIndex').value);
-            const actualReward = parseInt(document.getElementById('actualReward').value);
+            console.log('recordResult called');
+            
+            const selectedIndexElem = document.getElementById('selectedLineIndex');
+            const actualRewardElem = document.getElementById('actualReward');
+            
+            if (!selectedIndexElem || !actualRewardElem) {
+                alert('找不到輸入欄位!請先點擊「分析」按鈕。');
+                return;
+            }
+            
+            const selectedIndex = parseInt(selectedIndexElem.value);
+            const actualReward = parseInt(actualRewardElem.value);
+            
+            console.log('selectedIndex:', selectedIndex, 'actualReward:', actualReward);
             
             // 檢查是否所有格子都已填入
             const allFilled = grid.flat().every(cell => cell !== null);
@@ -1871,7 +1883,7 @@ https://gist.github.com/username/ghi789..."
                 return;
             }
             
-            if (!actualReward || actualReward < 0) {
+            if (!actualReward || actualReward < 0 || isNaN(actualReward)) {
                 alert('請輸入有效的獎勵金額!');
                 return;
             }
@@ -4241,8 +4253,16 @@ https://gist.github.com/username/ghi789..."
         }
 
         function enableFillMode() {
-            alert('請繼續填入剩餘的數字。填完後會自動顯示記錄選項。');
-            // 不需要特別做什麼,用戶可以繼續填數字
+            // 重新分析以顯示記錄區域
+            analyze();
+            
+            // 滾動到記錄區域
+            setTimeout(() => {
+                const recordSection = document.querySelector('[style*="記錄遊戲結果"]');
+                if (recordSection) {
+                    recordSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 300);
         }
 
         function toggleDetails(element) {
