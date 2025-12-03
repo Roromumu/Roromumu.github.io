@@ -2585,6 +2585,10 @@ https://gist.github.com/username/ghi789..."
                 localStorage.removeItem('cactpotHistory');
                 document.getElementById('historySection').classList.remove('show');
                 document.getElementById('statsAnalysisSection').classList.remove('show');
+                
+                // 更新顯示為空狀態
+                updateHistoryDisplay();
+                
                 alert('✅ 歷史記錄已清除');
             }
         }
