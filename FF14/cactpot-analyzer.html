@@ -2923,20 +2923,36 @@ https://gist.github.com/username/ghi789..."
 
         async function autoSyncFromGist() {
             console.log('Auto-syncing...');
+            console.log('Current history count:', gameHistory.length);
             
             try {
                 const result = await fetchDataFromSource();
                 
                 if (result.success && result.data.length > 0) {
+                    console.log('Fetched data count:', result.data.length);
+                    
                     const existingTimestamps = new Set(gameHistory.map(r => r.timestamp));
+                    console.log('Existing timestamps:', existingTimestamps.size);
+                    
                     let addedCount = 0;
+                    let duplicateCount = 0;
 
                     result.data.forEach(record => {
+                        if (!record.timestamp) {
+                            console.warn('Record without timestamp:', record);
+                            return;
+                        }
+                        
                         if (!existingTimestamps.has(record.timestamp)) {
                             gameHistory.push(record);
+                            existingTimestamps.add(record.timestamp); // 防止同一批數據內的重複
                             addedCount++;
+                        } else {
+                            duplicateCount++;
                         }
                     });
+                    
+                    console.log(`Sync results: ${addedCount} added, ${duplicateCount} duplicates skipped`);
 
                     if (addedCount > 0) {
                         gameHistory.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
@@ -2949,7 +2965,6 @@ https://gist.github.com/username/ghi789..."
                         }
                         document.getElementById('historySection').classList.add('show');
                         
-                        console.log(`Auto-sync complete: ${addedCount} new records added`);
                         showSyncNotification(`🔄 自動同步完成: 新增 ${addedCount} 局記錄`);
                     } else {
                         console.log('Auto-sync: No new data');
@@ -2982,11 +2997,20 @@ https://gist.github.com/username/ghi789..."
 
                 const existingTimestamps = new Set(gameHistory.map(r => r.timestamp));
                 let addedCount = 0;
+                let duplicateCount = 0;
 
                 result.data.forEach(record => {
+                    if (!record.timestamp) {
+                        console.warn('Record without timestamp:', record);
+                        return;
+                    }
+                    
                     if (!existingTimestamps.has(record.timestamp)) {
                         gameHistory.push(record);
+                        existingTimestamps.add(record.timestamp); // 防止同一批數據內的重複
                         addedCount++;
+                    } else {
+                        duplicateCount++;
                     }
                 });
 
@@ -3001,7 +3025,14 @@ https://gist.github.com/username/ghi789..."
                 document.getElementById('historySection').classList.add('show');
 
                 loadingMsg.remove();
-                showSyncNotification(`✅ 同步完成: 新增 ${addedCount} 局 | 總計 ${gameHistory.length} 局`, true, 3000);
+                
+                let syncMessage = `✅ 同步完成: 新增 ${addedCount} 局`;
+                if (duplicateCount > 0) {
+                    syncMessage += ` | 跳過重複 ${duplicateCount} 局`;
+                }
+                syncMessage += ` | 總計 ${gameHistory.length} 局`;
+                
+                showSyncNotification(syncMessage, true, 5000);
 
             } catch (error) {
                 loadingMsg.remove();
