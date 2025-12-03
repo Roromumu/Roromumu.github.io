@@ -2200,6 +2200,16 @@ https://gist.github.com/username/ghi789..."
             ).length;
 
             const followedCount = gameHistory.filter(r => r.followedRecommendation).length;
+            
+            // 統計用戶採納各策略的次數
+            const userFollowedBalanced = gamesWithStrategies.filter(r => r.followedBalanced).length;
+            const userFollowedConservative = gamesWithStrategies.filter(r => r.followedConservative).length;
+            const userFollowedAggressive = gamesWithStrategies.filter(r => r.followedAggressive).length;
+            const userFollowedLearned = gamesWithStrategies.filter(r => r.followedLearned).length;
+            const userFollowedNone = gamesWithStrategies.filter(r => 
+                !r.followedBalanced && !r.followedConservative && 
+                !r.followedAggressive && !r.followedLearned
+            ).length;
 
             return {
                 totalGames: totalGames,
@@ -2218,7 +2228,21 @@ https://gist.github.com/username/ghi789..."
                 balancedOptimalCount: balancedOptimal,
                 conservativeOptimalCount: conservativeOptimal,
                 aggressiveOptimalCount: aggressiveOptimal,
-                learnedOptimalCount: learnedOptimal
+                learnedOptimalCount: learnedOptimal,
+                
+                // 用戶偏好統計
+                userPreferenceStats: strategiesCount > 0 ? {
+                    balancedCount: userFollowedBalanced,
+                    conservativeCount: userFollowedConservative,
+                    aggressiveCount: userFollowedAggressive,
+                    learnedCount: userFollowedLearned,
+                    noneCount: userFollowedNone,
+                    balancedPercent: Math.round(userFollowedBalanced / strategiesCount * 100),
+                    conservativePercent: Math.round(userFollowedConservative / strategiesCount * 100),
+                    aggressivePercent: Math.round(userFollowedAggressive / strategiesCount * 100),
+                    learnedPercent: Math.round(userFollowedLearned / strategiesCount * 100),
+                    nonePercent: Math.round(userFollowedNone / strategiesCount * 100)
+                } : null
             };
         }
 
@@ -2334,6 +2358,20 @@ https://gist.github.com/username/ghi789..."
                                 '平衡策略表現最佳,穩健可靠!' :
                                 '保守策略表現最佳,適合求穩!'
                             }
+                        </div>
+                        ` : ''}
+                        ${accuracy.userPreferenceStats ? `
+                        <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.3);">
+                            <div style="font-size: 14px; margin-bottom: 10px; text-align: center; opacity: 0.95;">
+                                📈 你的策略偏好統計
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; font-size: 13px;">
+                                <div style="text-align: center;">⚖️ 平衡: ${accuracy.userPreferenceStats.balancedCount} 次 (${accuracy.userPreferenceStats.balancedPercent}%)</div>
+                                <div style="text-align: center;">🛡️ 保守: ${accuracy.userPreferenceStats.conservativeCount} 次 (${accuracy.userPreferenceStats.conservativePercent}%)</div>
+                                <div style="text-align: center;">🚀 激進: ${accuracy.userPreferenceStats.aggressiveCount} 次 (${accuracy.userPreferenceStats.aggressivePercent}%)</div>
+                                ${accuracy.userPreferenceStats.learnedCount > 0 ? `<div style="text-align: center;">🧠 AI: ${accuracy.userPreferenceStats.learnedCount} 次 (${accuracy.userPreferenceStats.learnedPercent}%)</div>` : ''}
+                                ${accuracy.userPreferenceStats.noneCount > 0 ? `<div style="text-align: center; opacity: 0.7;">❓ 自選: ${accuracy.userPreferenceStats.noneCount} 次 (${accuracy.userPreferenceStats.nonePercent}%)</div>` : ''}
+                            </div>
                         </div>
                         ` : ''}
                     </div>
@@ -2468,14 +2506,42 @@ https://gist.github.com/username/ghi789..."
                 // 構建策略推薦顯示
                 let strategiesDisplay = '';
                 if (record.recommendedByBalanced) {
+                    // 判斷用戶跟隨了哪個策略
+                    const followedStrategies = [];
+                    if (record.followedBalanced) followedStrategies.push('⚖️ 平衡');
+                    if (record.followedConservative) followedStrategies.push('🛡️ 保守');
+                    if (record.followedAggressive) followedStrategies.push('🚀  激進');
+                    if (record.followedLearned) followedStrategies.push('🧠 AI');
+                    
+                    const followedText = followedStrategies.length > 0 
+                        ? `<span style="color: #2ecc71; font-weight: bold;">✓ 採納: ${followedStrategies.join('、')}</span>`
+                        : '<span style="color: #999;">⚠️ 自行選擇</span>';
+                    
                     strategiesDisplay = `
                         <div class="history-item-detail" style="background: #f8f9fa; padding: 8px; border-radius: 5px; margin-top: 5px;">
-                            <div style="font-weight: bold; color: #667eea; margin-bottom: 5px; font-size: 12px;">📋 4種策略推薦:</div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                <div style="font-weight: bold; color: #667eea; font-size: 12px;">📋 4種策略推薦</div>
+                                <div style="font-size: 11px;">${followedText}</div>
+                            </div>
                             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; font-size: 11px;">
-                                <div>⚖️ 平衡: ${record.recommendedByBalanced} ${record.balancedWasOptimal ? '✓' : '✗'}</div>
-                                <div>🛡️ 保守: ${record.recommendedByConservative} ${record.conservativeWasOptimal ? '✓' : '✗'}</div>
-                                <div>🚀 激進: ${record.recommendedByAggressive} ${record.aggressiveWasOptimal ? '✓' : '✗'}</div>
-                                ${record.recommendedByLearned ? `<div>🧠 AI: ${record.recommendedByLearned} ${record.learnedWasOptimal ? '✓' : '✗'}</div>` : '<div style="color: #999;">🧠 AI: 數據不足</div>'}
+                                <div style="${record.followedBalanced ? 'background: #d4edda; padding: 3px 6px; border-radius: 4px; border: 1px solid #2ecc71;' : ''}">
+                                    ⚖️ 平衡: ${record.recommendedByBalanced} ${record.balancedWasOptimal ? '✓' : '✗'}
+                                    ${record.followedBalanced ? '<span style="color: #2ecc71; font-weight: bold;"> ← 你的選擇</span>' : ''}
+                                </div>
+                                <div style="${record.followedConservative ? 'background: #d4edda; padding: 3px 6px; border-radius: 4px; border: 1px solid #2ecc71;' : ''}">
+                                    🛡️ 保守: ${record.recommendedByConservative} ${record.conservativeWasOptimal ? '✓' : '✗'}
+                                    ${record.followedConservative ? '<span style="color: #2ecc71; font-weight: bold;"> ← 你的選擇</span>' : ''}
+                                </div>
+                                <div style="${record.followedAggressive ? 'background: #d4edda; padding: 3px 6px; border-radius: 4px; border: 1px solid #2ecc71;' : ''}">
+                                    🚀 激進: ${record.recommendedByAggressive} ${record.aggressiveWasOptimal ? '✓' : '✗'}
+                                    ${record.followedAggressive ? '<span style="color: #2ecc21; font-weight: bold;"> ← 你的選擇</span>' : ''}
+                                </div>
+                                ${record.recommendedByLearned ? `
+                                <div style="${record.followedLearned ? 'background: #d4edda; padding: 3px 6px; border-radius: 4px; border: 1px solid #2ecc71;' : ''}">
+                                    🧠 AI: ${record.recommendedByLearned} ${record.learnedWasOptimal ? '✓' : '✗'}
+                                    ${record.followedLearned ? '<span style="color: #2ecc71; font-weight: bold;"> ← 你的選擇</span>' : ''}
+                                </div>
+                                ` : '<div style="color: #999;">🧠 AI: 數據不足</div>'}
                             </div>
                         </div>
                     `;
