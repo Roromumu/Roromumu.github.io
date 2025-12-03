@@ -2508,14 +2508,21 @@ https://gist.github.com/username/ghi789..."
                 if (record.recommendedByBalanced) {
                     // 判斷用戶跟隨了哪個策略
                     const followedStrategies = [];
+                    const followedMain = record.followedBalanced; // 平衡策略是主推薦
+                    
                     if (record.followedBalanced) followedStrategies.push('⚖️ 平衡');
                     if (record.followedConservative) followedStrategies.push('🛡️ 保守');
-                    if (record.followedAggressive) followedStrategies.push('🚀  激進');
+                    if (record.followedAggressive) followedStrategies.push('🚀 激進');
                     if (record.followedLearned) followedStrategies.push('🧠 AI');
                     
-                    const followedText = followedStrategies.length > 0 
-                        ? `<span style="color: #2ecc71; font-weight: bold;">✓ 採納: ${followedStrategies.join('、')}</span>`
-                        : '<span style="color: #999;">⚠️ 自行選擇</span>';
+                    let followedText;
+                    if (followedStrategies.length === 0) {
+                        followedText = '<span style="color: #999;">⚠️ 自行選擇</span>';
+                    } else if (followedMain) {
+                        followedText = `<span style="color: #2ecc71; font-weight: bold;">✓ 採納主推薦</span>`;
+                    } else {
+                        followedText = `<span style="color: #3498db; font-weight: bold;">✓ 採納: ${followedStrategies.join('、')}</span>`;
+                    }
                     
                     strategiesDisplay = `
                         <div class="history-item-detail" style="background: #f8f9fa; padding: 8px; border-radius: 5px; margin-top: 5px;">
@@ -2525,7 +2532,7 @@ https://gist.github.com/username/ghi789..."
                             </div>
                             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; font-size: 11px;">
                                 <div style="${record.followedBalanced ? 'background: #d4edda; padding: 3px 6px; border-radius: 4px; border: 1px solid #2ecc71;' : ''}">
-                                    ⚖️ 平衡: ${record.recommendedByBalanced} ${record.balancedWasOptimal ? '✓' : '✗'}
+                                    ⚖️ 平衡 (主推): ${record.recommendedByBalanced} ${record.balancedWasOptimal ? '✓' : '✗'}
                                     ${record.followedBalanced ? '<span style="color: #2ecc71; font-weight: bold;"> ← 你的選擇</span>' : ''}
                                 </div>
                                 <div style="${record.followedConservative ? 'background: #d4edda; padding: 3px 6px; border-radius: 4px; border: 1px solid #2ecc71;' : ''}">
@@ -2534,7 +2541,7 @@ https://gist.github.com/username/ghi789..."
                                 </div>
                                 <div style="${record.followedAggressive ? 'background: #d4edda; padding: 3px 6px; border-radius: 4px; border: 1px solid #2ecc71;' : ''}">
                                     🚀 激進: ${record.recommendedByAggressive} ${record.aggressiveWasOptimal ? '✓' : '✗'}
-                                    ${record.followedAggressive ? '<span style="color: #2ecc21; font-weight: bold;"> ← 你的選擇</span>' : ''}
+                                    ${record.followedAggressive ? '<span style="color: #2ecc71; font-weight: bold;"> ← 你的選擇</span>' : ''}
                                 </div>
                                 ${record.recommendedByLearned ? `
                                 <div style="${record.followedLearned ? 'background: #d4edda; padding: 3px 6px; border-radius: 4px; border: 1px solid #2ecc71;' : ''}">
@@ -2555,7 +2562,7 @@ https://gist.github.com/username/ghi789..."
                         </div>
                         <div class="history-item-detail">
                             選擇: ${record.selectedLineValues.join('-')} (和:${record.selectedSum}) | 
-                            ${record.followedRecommendation ? '✓ 採納推薦' : '⚠️ 自行選擇'}
+                            ${(record.followedBalanced || record.followedConservative || record.followedAggressive || record.followedLearned) ? '✓ 採納推薦' : '⚠️ 自行選擇'}
                         </div>
                         ${!isOptimal ? `
                             <div class="history-item-detail" style="color: #e67e22;">
