@@ -1792,7 +1792,7 @@ https://gist.github.com/username/ghi789..."
                         }
                     });
                     
-                    // 3. 高價值潛力: 根據獎金表評估
+                    // 3. 高價值潛力: 根據獎金表評估 (改用期望值計算)
                     participatingLines.forEach(line => {
                         const values = line.cells.map(([lr,lc]) => grid[lr][lc]);
                         const lineKnownCount = values.filter(v => v !== null).length;
@@ -1801,84 +1801,112 @@ https://gist.github.com/username/ghi789..."
                             const knownSum = values.filter(v => v !== null).reduce((a,b) => a+b, 0);
                             const unknownInLine = 3 - lineKnownCount;
                             
-                            // 檢查能否湊出高價值目標
-                            highValueTargets.forEach(target => {
-                                const remainingSum = target.sum - knownSum; // 剩餘格子需要加總到這個數
+                            if (unknownInLine === 1) {
+                                // 只缺1個數字: 計算期望值
+                                let totalReward = 0;
+                                let validCount = 0;
                                 
-                                if (unknownInLine === 1) {
-                                    // 只缺1個數字,檢查這個數字是否可用
-                                    if (availableNumbers.includes(remainingSum)) {
-                                        const bonus = target.priority * 2; // 確定能湊出,大加分!
-                                        details.highValuePotential += bonus;
-                                        score += bonus;
-                                        details.opportunities.push({
-                                            line: line.name,
-                                            target: target.sum,
-                                            reward: target.reward,
-                                            needNumbers: [remainingSum],
-                                            certain: true
-                                        });
+                                availableNumbers.forEach(num => {
+                                    const targetSum = knownSum + num;
+                                    const reward = rewardTable[targetSum] || 0;
+                                    totalReward += reward;
+                                    validCount++;
+                                });
+                                
+                                const expectedReward = validCount > 0 ? totalReward / validCount : 0;
+                                const bonus = Math.floor(expectedReward / 10); // 期望值轉為分數
+                                details.highValuePotential += bonus;
+                                score += bonus;
+                                
+                                // 如果有特別高的可能(>= 1000),標記機會
+                                availableNumbers.forEach(num => {
+                                    const targetSum = knownSum + num;
+                                    const reward = rewardTable[targetSum] || 0;
+                                    if (reward >= 1000) {
                                         highValueOpportunities.push({
                                             position: [r,c],
                                             line: line.name,
-                                            target: target.sum,
-                                            reward: target.reward,
-                                            needNumbers: [remainingSum]
+                                            target: targetSum,
+                                            reward: reward,
+                                            needNumbers: [num],
+                                            probability: 1 / validCount
                                         });
                                     }
-                                } else if (unknownInLine === 2) {
-                                    // 缺2個數字,檢查是否有配對可以湊出remainingSum
-                                    let canAchieve = false;
-                                    let neededPair = [];
-                                    
-                                    for (let i = 0; i < availableNumbers.length; i++) {
-                                        for (let j = i + 1; j < availableNumbers.length; j++) {
-                                            if (availableNumbers[i] + availableNumbers[j] === remainingSum) {
-                                                canAchieve = true;
-                                                neededPair = [availableNumbers[i], availableNumbers[j]];
-                                                break;
-                                            }
-                                        }
-                                        if (canAchieve) break;
-                                    }
-                                    
-                                    if (canAchieve) {
-                                        const bonus = Math.floor(target.priority * 0.5); // 可能湊出,中加分
-                                        details.highValuePotential += bonus;
-                                        score += bonus;
-                                        details.opportunities.push({
-                                            line: line.name,
-                                            target: target.sum,
-                                            reward: target.reward,
-                                            needNumbers: neededPair,
-                                            certain: false
+                                });
+                                
+                            } else if (unknownInLine === 2) {
+                                // 缺2個數字: 計算top組合的期望值
+                                const possibleCombinations = [];
+                                
+                                for (let i = 0; i < availableNumbers.length; i++) {
+                                    for (let j = i + 1; j < availableNumbers.length; j++) {
+                                        const targetSum = knownSum + availableNumbers[i] + availableNumbers[j];
+                                        const reward = rewardTable[targetSum] || 0;
+                                        possibleCombinations.push({
+                                            sum: targetSum,
+                                            reward: reward,
+                                            nums: [availableNumbers[i], availableNumbers[j]]
                                         });
-                                    }
-                                } else if (unknownInLine === 3) {
-                                    // 3個都未知,檢查理論上能否達成
-                                    // 需要3個數字加起來 = target.sum
-                                    let canAchieve = false;
-                                    
-                                    for (let i = 0; i < availableNumbers.length; i++) {
-                                        for (let j = i + 1; j < availableNumbers.length; j++) {
-                                            for (let k = j + 1; k < availableNumbers.length; k++) {
-                                                if (availableNumbers[i] + availableNumbers[j] + availableNumbers[k] === target.sum) {
-                                                    canAchieve = true;
-                                                    break;
-                                                }
-                                            }
-                                            if (canAchieve) break;
-                                        }
-                                        if (canAchieve) break;
-                                    }
-                                    
-                                    if (canAchieve) {
-                                        const bonus = Math.floor(target.priority * 0.2); // 理論可能,小加分
-                                        details.highValuePotential += bonus;
-                                        score += bonus;
                                     }
                                 }
-                            });
+                                
+                                if (possibleCombinations.length > 0) {
+                                    // 計算加權期望: 前20%組合權重更高
+                                    possibleCombinations.sort((a, b) => b.reward - a.reward);
+                                    const topCount = Math.max(1, Math.floor(possibleCombinations.length * 0.2));
+                                    
+                                    let weightedReward = 0;
+                                    for (let i = 0; i < topCount; i++) {
+                                        weightedReward += possibleCombinations[i].reward;
+                                    }
+                                    weightedReward /= topCount;
+                                    
+                                    const bonus = Math.floor(weightedReward / 15); // 略低於缺1個的權重
+                                    details.highValuePotential += bonus;
+                                    score += bonus;
+                                    
+                                    // 標記高獎機會
+                                    if (possibleCombinations[0].reward >= 1000) {
+                                        highValueOpportunities.push({
+                                            position: [r,c],
+                                            line: line.name,
+                                            target: possibleCombinations[0].sum,
+                                            reward: possibleCombinations[0].reward,
+                                            needNumbers: possibleCombinations[0].nums,
+                                            probability: 1 / possibleCombinations.length
+                                        });
+                                    }
+                                }
+                                
+                            } else if (unknownInLine === 3) {
+                                // 3個都未知: 計算理論最高可能
+                                const possibleCombinations = [];
+                                
+                                for (let i = 0; i < availableNumbers.length; i++) {
+                                    for (let j = i + 1; j < availableNumbers.length; j++) {
+                                        for (let k = j + 1; k < availableNumbers.length; k++) {
+                                            const targetSum = availableNumbers[i] + availableNumbers[j] + availableNumbers[k];
+                                            const reward = rewardTable[targetSum] || 0;
+                                            possibleCombinations.push(reward);
+                                        }
+                                    }
+                                }
+                                
+                                if (possibleCombinations.length > 0) {
+                                    // 只看前10%的可能
+                                    possibleCombinations.sort((a, b) => b - a);
+                                    const topCount = Math.max(1, Math.floor(possibleCombinations.length * 0.1));
+                                    let topAvg = 0;
+                                    for (let i = 0; i < topCount; i++) {
+                                        topAvg += possibleCombinations[i];
+                                    }
+                                    topAvg /= topCount;
+                                    
+                                    const bonus = Math.floor(topAvg / 30); // 更低的權重
+                                    details.highValuePotential += bonus;
+                                    score += bonus;
+                                }
+                            }
                         }
                     });
                     
@@ -1922,7 +1950,17 @@ https://gist.github.com/username/ghi789..."
                 // 優先顯示高價值機會
                 if (highValueOpportunities.length > 0) {
                     const topOpp = highValueOpportunities.sort((a,b) => b.reward - a.reward)[0];
-                    reason = `翻開可能湊出${topOpp.line} ${topOpp.target}點 (${topOpp.reward.toLocaleString()} MGP)`;
+                    
+                    // 格式化機率顯示
+                    const probPercent = (topOpp.probability * 100).toFixed(1);
+                    
+                    if (topOpp.needNumbers.length === 1) {
+                        // 缺1個數字
+                        reason = `翻開可能湊出${topOpp.line} ${topOpp.target}點 (${topOpp.reward.toLocaleString()} MGP，機率 ${probPercent}%)`;
+                    } else {
+                        // 缺2個數字
+                        reason = `翻開有機會湊出${topOpp.line} ${topOpp.target}點 (${topOpp.reward.toLocaleString()} MGP，需要${topOpp.needNumbers.join('+')}，機率 ${probPercent}%)`;
+                    }
                 } else if (knownCount === 1) {
                     if (bestPositions.some(([r,c]) => r === 1 && c === 1)) {
                         reason = '中心位置影響最多線路,能獲得最大資訊增益';
@@ -1930,9 +1968,9 @@ https://gist.github.com/username/ghi789..."
                         reason = '這些位置能提供最多有價值的資訊';
                     }
                 } else if (knownCount === 2) {
-                    reason = '翻開後可快速確定某些線路的潛力';
+                    reason = '翻開後可快速確定某些線路的潛力,幫助做出更準確的決策';
                 } else {
-                    reason = '這些位置最有可能找到高獎勵線路';
+                    reason = '根據期望值計算,這些位置最有可能獲得高獎勵';
                 }
                 
                 return {
