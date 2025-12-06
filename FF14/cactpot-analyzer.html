@@ -1481,24 +1481,70 @@ https://gist.github.com/username/ghi789..."
                 const maxReward = Math.max(...record.allLines.map(line => line.reward));
                 const shouldBeOptimal = record.actualReward === maxReward;
                 
-                // 如果判斷不一致,修正它
+                let needsFix = false;
+                
+                // 修復 isOptimal
                 if (record.isOptimal !== shouldBeOptimal) {
+                    record.isOptimal = shouldBeOptimal;
+                    record.missedReward = maxReward - record.actualReward;
+                    needsFix = true;
+                }
+                
+                // 修復策略 wasOptimal (如果有策略推薦)
+                if (record.recommendedByBalanced) {
+                    const balancedLine = record.allLines.find(line => line.name === record.recommendedByBalanced);
+                    const shouldBeBalancedOptimal = balancedLine ? balancedLine.reward === maxReward : false;
+                    if (record.balancedWasOptimal !== shouldBeBalancedOptimal) {
+                        record.balancedWasOptimal = shouldBeBalancedOptimal;
+                        needsFix = true;
+                    }
+                }
+                
+                if (record.recommendedByConservative) {
+                    const conservativeLine = record.allLines.find(line => line.name === record.recommendedByConservative);
+                    const shouldBeConservativeOptimal = conservativeLine ? conservativeLine.reward === maxReward : false;
+                    if (record.conservativeWasOptimal !== shouldBeConservativeOptimal) {
+                        record.conservativeWasOptimal = shouldBeConservativeOptimal;
+                        needsFix = true;
+                    }
+                }
+                
+                if (record.recommendedByAggressive) {
+                    const aggressiveLine = record.allLines.find(line => line.name === record.recommendedByAggressive);
+                    const shouldBeAggressiveOptimal = aggressiveLine ? aggressiveLine.reward === maxReward : false;
+                    if (record.aggressiveWasOptimal !== shouldBeAggressiveOptimal) {
+                        record.aggressiveWasOptimal = shouldBeAggressiveOptimal;
+                        needsFix = true;
+                    }
+                }
+                
+                if (record.recommendedByLearned) {
+                    const learnedLine = record.allLines.find(line => line.name === record.recommendedByLearned);
+                    const shouldBeLearnedOptimal = learnedLine ? learnedLine.reward === maxReward : false;
+                    if (record.learnedWasOptimal !== shouldBeLearnedOptimal) {
+                        record.learnedWasOptimal = shouldBeLearnedOptimal;
+                        needsFix = true;
+                    }
+                }
+                
+                if (needsFix) {
                     console.log(`修復記錄 ${index + 1}:`, {
                         selectedLine: record.selectedLine,
                         actualReward: record.actualReward,
                         maxReward: maxReward,
-                        oldIsOptimal: record.isOptimal,
-                        newIsOptimal: shouldBeOptimal
+                        strategies: {
+                            balanced: `${record.recommendedByBalanced} ${record.balancedWasOptimal ? '✓' : '✗'}`,
+                            conservative: `${record.recommendedByConservative} ${record.conservativeWasOptimal ? '✓' : '✗'}`,
+                            aggressive: `${record.recommendedByAggressive} ${record.aggressiveWasOptimal ? '✓' : '✗'}`,
+                            learned: record.recommendedByLearned ? `${record.recommendedByLearned} ${record.learnedWasOptimal ? '✓' : '✗'}` : 'N/A'
+                        }
                     });
-                    
-                    record.isOptimal = shouldBeOptimal;
-                    record.missedReward = maxReward - record.actualReward;
                     fixed++;
                 }
             });
             
             if (fixed > 0) {
-                console.log(`✅ 自動修復了 ${fixed} 筆舊記錄的 isOptimal 判斷`);
+                console.log(`✅ 自動修復了 ${fixed} 筆舊記錄`);
                 localStorage.setItem('cactpotHistory', JSON.stringify(gameHistory));
             }
             
@@ -2316,11 +2362,23 @@ https://gist.github.com/username/ghi789..."
                 isOptimal: actualReward === maxReward,  // ← 關鍵修改!
                 missedReward: maxReward - actualReward,
                 
-                // 4種策略是否推薦了最佳線
-                balancedWasOptimal: gameInProgress.strategies.balanced === actualBestLine.name,
-                conservativeWasOptimal: gameInProgress.strategies.conservative === actualBestLine.name,
-                aggressiveWasOptimal: gameInProgress.strategies.aggressive === actualBestLine.name,
-                learnedWasOptimal: gameInProgress.strategies.learned === actualBestLine.name
+                // 4種策略是否推薦了最佳線 (比較獎勵而非名稱)
+                balancedWasOptimal: (() => {
+                    const recommended = allLinesData.find(line => line.name === gameInProgress.strategies.balanced);
+                    return recommended ? recommended.reward === maxReward : false;
+                })(),
+                conservativeWasOptimal: (() => {
+                    const recommended = allLinesData.find(line => line.name === gameInProgress.strategies.conservative);
+                    return recommended ? recommended.reward === maxReward : false;
+                })(),
+                aggressiveWasOptimal: (() => {
+                    const recommended = allLinesData.find(line => line.name === gameInProgress.strategies.aggressive);
+                    return recommended ? recommended.reward === maxReward : false;
+                })(),
+                learnedWasOptimal: (() => {
+                    const recommended = allLinesData.find(line => line.name === gameInProgress.strategies.learned);
+                    return recommended ? recommended.reward === maxReward : false;
+                })()
             };
 
             gameHistory.push(record);
