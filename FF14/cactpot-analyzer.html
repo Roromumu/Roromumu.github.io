@@ -1647,28 +1647,175 @@ https://gist.github.com/username/ghi789..."
                 {name: '右斜線', cells: [[0,2], [1,1], [2,0]]}
             ];
 
+            const knownCount = grid.flat().filter(v => v !== null).length;
+            const availableNumbers = [1,2,3,4,5,6,7,8,9].filter(n => !usedNumbers.has(n));
+            
+            // 高價值目標總和 (按獎金排序)
+            const highValueTargets = [
+                {sum: 6, reward: 10000, priority: 100},
+                {sum: 24, reward: 3600, priority: 90},
+                {sum: 23, reward: 1800, priority: 85},
+                {sum: 21, reward: 1080, priority: 80},
+                {sum: 8, reward: 720, priority: 70},
+                {sum: 15, reward: 180, priority: 50},
+                {sum: 17, reward: 180, priority: 50},
+                {sum: 11, reward: 252, priority: 45},
+                {sum: 20, reward: 306, priority: 55},
+                {sum: 22, reward: 144, priority: 40}
+            ];
+            
             let bestScore = -1;
             let bestPositions = [];
+            let scoreDetails = {};
+            let highValueOpportunities = [];
 
             // 評估每個未填的格子
             for (let r = 0; r < 3; r++) {
                 for (let c = 0; c < 3; c++) {
                     if (grid[r][c] !== null) continue;
 
-                    // 計算這個格子的價值分數
                     let score = 0;
-                    lines.forEach(line => {
-                        if (line.cells.some(([lr, lc]) => lr === r && lc === c)) {
-                            const values = line.cells.map(([lr,lc]) => grid[lr][lc]);
-                            const knownCount = values.filter(v => v !== null).length;
-                            // 有1-2個已知數字的線更有價值(可以幫助判斷潛力)
-                            if (knownCount >= 1 && knownCount < 3) {
-                                score += knownCount * 3;
-                            }
-                            score += 1; // 基礎分:參與線的數量
+                    let details = {
+                        position: `(${r},${c})`,
+                        lineCount: 0,
+                        informationGain: 0,
+                        strategicValue: 0,
+                        highValuePotential: 0,
+                        opportunities: []
+                    };
+                    
+                    // 1. 基礎分數: 參與的線數量
+                    const participatingLines = lines.filter(line => 
+                        line.cells.some(([lr, lc]) => lr === r && lc === c)
+                    );
+                    details.lineCount = participatingLines.length;
+                    score += participatingLines.length * 10;
+                    
+                    // 2. 資訊增益: 能幫助判斷的線數量
+                    participatingLines.forEach(line => {
+                        const values = line.cells.map(([lr,lc]) => grid[lr][lc]);
+                        const lineKnownCount = values.filter(v => v !== null).length;
+                        
+                        if (lineKnownCount >= 1 && lineKnownCount < 3) {
+                            details.informationGain += lineKnownCount * 5;
+                            score += lineKnownCount * 5;
                         }
                     });
+                    
+                    // 3. 高價值潛力: 根據獎金表評估
+                    participatingLines.forEach(line => {
+                        const values = line.cells.map(([lr,lc]) => grid[lr][lc]);
+                        const lineKnownCount = values.filter(v => v !== null).length;
+                        
+                        if (lineKnownCount > 0) {
+                            const knownSum = values.filter(v => v !== null).reduce((a,b) => a+b, 0);
+                            const unknownInLine = 3 - lineKnownCount;
+                            
+                            // 檢查能否湊出高價值目標
+                            highValueTargets.forEach(target => {
+                                const remainingSum = target.sum - knownSum; // 剩餘格子需要加總到這個數
+                                
+                                if (unknownInLine === 1) {
+                                    // 只缺1個數字,檢查這個數字是否可用
+                                    if (availableNumbers.includes(remainingSum)) {
+                                        const bonus = target.priority * 2; // 確定能湊出,大加分!
+                                        details.highValuePotential += bonus;
+                                        score += bonus;
+                                        details.opportunities.push({
+                                            line: line.name,
+                                            target: target.sum,
+                                            reward: target.reward,
+                                            needNumbers: [remainingSum],
+                                            certain: true
+                                        });
+                                        highValueOpportunities.push({
+                                            position: [r,c],
+                                            line: line.name,
+                                            target: target.sum,
+                                            reward: target.reward,
+                                            needNumbers: [remainingSum]
+                                        });
+                                    }
+                                } else if (unknownInLine === 2) {
+                                    // 缺2個數字,檢查是否有配對可以湊出remainingSum
+                                    let canAchieve = false;
+                                    let neededPair = [];
+                                    
+                                    for (let i = 0; i < availableNumbers.length; i++) {
+                                        for (let j = i + 1; j < availableNumbers.length; j++) {
+                                            if (availableNumbers[i] + availableNumbers[j] === remainingSum) {
+                                                canAchieve = true;
+                                                neededPair = [availableNumbers[i], availableNumbers[j]];
+                                                break;
+                                            }
+                                        }
+                                        if (canAchieve) break;
+                                    }
+                                    
+                                    if (canAchieve) {
+                                        const bonus = Math.floor(target.priority * 0.5); // 可能湊出,中加分
+                                        details.highValuePotential += bonus;
+                                        score += bonus;
+                                        details.opportunities.push({
+                                            line: line.name,
+                                            target: target.sum,
+                                            reward: target.reward,
+                                            needNumbers: neededPair,
+                                            certain: false
+                                        });
+                                    }
+                                } else if (unknownInLine === 3) {
+                                    // 3個都未知,檢查理論上能否達成
+                                    // 需要3個數字加起來 = target.sum
+                                    let canAchieve = false;
+                                    
+                                    for (let i = 0; i < availableNumbers.length; i++) {
+                                        for (let j = i + 1; j < availableNumbers.length; j++) {
+                                            for (let k = j + 1; k < availableNumbers.length; k++) {
+                                                if (availableNumbers[i] + availableNumbers[j] + availableNumbers[k] === target.sum) {
+                                                    canAchieve = true;
+                                                    break;
+                                                }
+                                            }
+                                            if (canAchieve) break;
+                                        }
+                                        if (canAchieve) break;
+                                    }
+                                    
+                                    if (canAchieve) {
+                                        const bonus = Math.floor(target.priority * 0.2); // 理論可能,小加分
+                                        details.highValuePotential += bonus;
+                                        score += bonus;
+                                    }
+                                }
+                            });
+                        }
+                    });
+                    
+                    // 4. 策略價值: 根據階段調整
+                    if (knownCount === 1) {
+                        // 第一次翻牌,中心格優先
+                        if (r === 1 && c === 1) {
+                            details.strategicValue += 15;
+                            score += 15;
+                        } else if ((r === 0 || r === 2) && (c === 0 || c === 2)) {
+                            details.strategicValue += 8;
+                            score += 8;
+                        }
+                    } else if (knownCount === 2) {
+                        // 能快速確定一條線的位置
+                        participatingLines.forEach(line => {
+                            const values = line.cells.map(([lr,lc]) => grid[lr][lc]);
+                            const lineKnownCount = values.filter(v => v !== null).length;
+                            if (lineKnownCount === 2) {
+                                details.strategicValue += 20;
+                                score += 20;
+                            }
+                        });
+                    }
 
+                    scoreDetails[`${r},${c}`] = details;
+                    
                     if (score > bestScore) {
                         bestScore = score;
                         bestPositions = [[r, c]];
@@ -1679,9 +1826,30 @@ https://gist.github.com/username/ghi789..."
             }
 
             if (bestPositions.length > 0) {
+                // 生成推薦理由
+                let reason = '';
+                
+                // 優先顯示高價值機會
+                if (highValueOpportunities.length > 0) {
+                    const topOpp = highValueOpportunities.sort((a,b) => b.reward - a.reward)[0];
+                    reason = `翻開可能湊出${topOpp.line} ${topOpp.target}點 (${topOpp.reward.toLocaleString()} MGP)`;
+                } else if (knownCount === 1) {
+                    if (bestPositions.some(([r,c]) => r === 1 && c === 1)) {
+                        reason = '中心位置影響最多線路,能獲得最大資訊增益';
+                    } else {
+                        reason = '這些位置能提供最多有價值的資訊';
+                    }
+                } else if (knownCount === 2) {
+                    reason = '翻開後可快速確定某些線路的潛力';
+                } else {
+                    reason = '這些位置最有可能找到高獎勵線路';
+                }
+                
                 return {
                     positions: bestPositions,
-                    reason: '這些位置能提供最多有價值的資訊來判斷最佳路線'
+                    reason: reason,
+                    details: scoreDetails,
+                    opportunities: highValueOpportunities
                 };
             }
 
@@ -4291,12 +4459,12 @@ https://gist.github.com/username/ghi789..."
             let html = '<div class="result-title">📊 詳細分析結果</div>';
             
             // === 多重推薦策略區域 ===
-            if (uncertainLines.length > 0) {
+            if (uncertainLines.length > 0 || confirmedLines.length > 0) {
                 html += '<div class="summary-section" style="background: #e8f8f0; border: 2px solid #2ecc71;">';
                 html += '<div class="summary-title" style="color: #2ecc71;">🎯 智能多重推薦</div>';
                 
-                // 找出不同策略的推薦
-                const strategies = calculateStrategies(uncertainLines);
+                // 找出不同策略的推薦 (傳入所有線,包含確定的線)
+                const strategies = calculateStrategies(uncertainLines, confirmedLines);
                 
                 // 保存4種策略的推薦 (用於後續記錄比對)
                 const knownCount = grid.flat().filter(v => v !== null).length;
@@ -4551,21 +4719,43 @@ https://gist.github.com/username/ghi789..."
             }
         }
 
-        function calculateStrategies(uncertainLines) {
-            // 平衡策略：中位數最高
-            const balanced = [...uncertainLines].sort((a, b) => 
-                b.medianReward - a.medianReward
-            )[0];
+        function calculateStrategies(uncertainLines, confirmedLines = []) {
+            // 合併所有可選擇的線 (不確定的線 + 確定的線)
+            const allLines = [...uncertainLines, ...confirmedLines];
+            
+            if (allLines.length === 0) {
+                // 如果沒有任何線,返回空策略
+                return {
+                    balanced: uncertainLines[0] || confirmedLines[0],
+                    conservative: uncertainLines[0] || confirmedLines[0],
+                    aggressive: uncertainLines[0] || confirmedLines[0]
+                };
+            }
+            
+            // 平衡策略：平均/中位數獎勵最高
+            const balanced = [...allLines].sort((a, b) => {
+                const rewardA = a.type === 'confirmed' ? a.reward : a.medianReward;
+                const rewardB = b.type === 'confirmed' ? b.reward : b.medianReward;
+                return rewardB - rewardA;
+            })[0];
 
-            // 保守策略：最低獎勵最高
-            const conservative = [...uncertainLines].sort((a, b) => 
-                b.minReward - a.minReward
-            )[0];
+            // 保守策略：最低獎勵最高 (確定線的reward就是最低)
+            const conservative = [...allLines].sort((a, b) => {
+                const minA = a.type === 'confirmed' ? a.reward : a.minReward;
+                const minB = b.type === 'confirmed' ? b.reward : b.minReward;
+                return minB - minA;
+            })[0];
 
-            // 激進策略：高獎勵機率最高
-            const aggressive = [...uncertainLines].sort((a, b) => 
-                b.highRewardProb - a.highRewardProb
-            )[0];
+            // 激進策略：最高可能獎勵最高
+            const aggressive = [...allLines].sort((a, b) => {
+                const maxA = a.type === 'confirmed' ? a.reward : a.maxReward;
+                const maxB = b.type === 'confirmed' ? b.reward : b.maxReward;
+                // 如果最高獎勵相同,優先選高獎機率高的
+                if (maxA === maxB && a.highRewardProb && b.highRewardProb) {
+                    return b.highRewardProb - a.highRewardProb;
+                }
+                return maxB - maxA;
+            })[0];
 
             const strategies = {
                 balanced: balanced,
@@ -4575,19 +4765,21 @@ https://gist.github.com/username/ghi789..."
 
             // AI學習推薦（如果有足夠歷史數據）
             if (gameHistory.length >= 5) {
-                const learned = [...uncertainLines]
+                const learned = [...allLines]
                     .filter(line => line.historicalOptimalRate !== undefined)
                     .sort((a, b) => {
                         // 綜合評分：歷史表現 + 期望值
-                        const scoreA = (a.historicalScore || a.avgReward);
-                        const scoreB = (b.historicalScore || b.avgReward);
+                        const scoreA = a.type === 'confirmed' ? a.reward : (a.historicalScore || a.avgReward);
+                        const scoreB = b.type === 'confirmed' ? b.reward : (b.historicalScore || b.avgReward);
                         return scoreB - scoreA;
                     })[0];
 
-                if (learned && learned.historicalOptimalRate > 0) {
-                    learned.reason = learned.historicalOptimalRate >= 0.4 ? 
-                        '此線歷史表現優異' : 
-                        '綜合評估最佳選擇';
+                if (learned && (learned.type === 'confirmed' || learned.historicalOptimalRate > 0)) {
+                    learned.reason = learned.type === 'confirmed' ? 
+                        '確定可得獎勵' :
+                        (learned.historicalOptimalRate >= 0.4 ? 
+                            '此線歷史表現優異' : 
+                            '綜合評估最佳選擇');
                     strategies.learned = learned;
                 }
             }
