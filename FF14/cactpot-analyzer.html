@@ -2415,6 +2415,7 @@ https://gist.github.com/username/ghi789..."
         }
 
         function updateHistoryDisplay() {
+            try {
             const statsDiv = document.getElementById('historyStats');
             const listDiv = document.getElementById('historyList');
             const insightsBox = document.getElementById('insightsBox');
@@ -2669,7 +2670,7 @@ https://gist.github.com/username/ghi789..."
                 
                 const gridDisplay = record.fullGrid ? 
                     record.fullGrid.map(row => row.join('-')).join(' | ') : 
-                    record.selectedLineValues.join('-');
+                    (record.selectedLineValues ? record.selectedLineValues.join('-') : '資料不完整');
                 
                 // 構建策略推薦顯示
                 let strategiesDisplay = '';
@@ -2729,7 +2730,7 @@ https://gist.github.com/username/ghi789..."
                             <span style="color: #e74c3c;">${record.actualReward.toLocaleString()} MGP</span>
                         </div>
                         <div class="history-item-detail">
-                            選擇: ${record.selectedLineValues.join('-')} (和:${record.selectedSum}) | 
+                            選擇: ${record.selectedLineValues ? record.selectedLineValues.join('-') : '?'} ${record.selectedSum ? `(和:${record.selectedSum})` : ''} | 
                             ${(record.followedBalanced || record.followedConservative || record.followedAggressive || record.followedLearned) ? '✓ 採納推薦' : '⚠️ 自行選擇'}
                         </div>
                         ${!isOptimal ? `
@@ -2751,6 +2752,11 @@ https://gist.github.com/username/ghi789..."
 
             if (gameHistory.length > 15) {
                 listDiv.innerHTML += `<div style="text-align: center; color: #999; padding: 10px; font-size: 12px;">顯示最近15筆記錄，共${totalGames}筆</div>`;
+            }
+            } catch (error) {
+                console.error('updateHistoryDisplay error:', error);
+                console.error('Error stack:', error.stack);
+                alert(`❌ 顯示歷史記錄時發生錯誤:\n${error.message}\n\n請檢查瀏覽器控制台查看詳細資訊`);
             }
         }
 
