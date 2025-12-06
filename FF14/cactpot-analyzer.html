@@ -2302,9 +2302,9 @@ https://gist.github.com/username/ghi789..."
             let message = '✅ 結果已記錄!\n\n';
             if (record.isOptimal) {
                 message += '🎉 恭喜!你選擇了最佳路線!\n';
-            } else {
+            } else if (actualBestLine && actualBestLine.reward !== undefined) {
                 message += `📊 實際最佳線是: ${actualBestLine.name} (${actualBestLine.reward.toLocaleString()} MGP)\n`;
-                message += `差距: ${record.missedReward.toLocaleString()} MGP\n`;
+                message += `差距: ${(record.missedReward || 0).toLocaleString()} MGP\n`;
             }
             
             // 顯示4種策略的推薦情況
@@ -2444,15 +2444,15 @@ https://gist.github.com/username/ghi789..."
             const totalGames = gameHistory.length;
             const followedCount = gameHistory.filter(r => r.followedRecommendation).length;
             const optimalCount = gameHistory.filter(r => r.isOptimal).length;
-            const avgReward = Math.round(gameHistory.reduce((sum, r) => sum + r.actualReward, 0) / totalGames);
+            const avgReward = Math.round(gameHistory.reduce((sum, r) => sum + (r.actualReward || 0), 0) / totalGames);
             
             const avgRewardWhenFollowed = followedCount > 0 ?
                 Math.round(gameHistory.filter(r => r.followedRecommendation)
-                    .reduce((sum, r) => sum + r.actualReward, 0) / followedCount) : 0;
+                    .reduce((sum, r) => sum + (r.actualReward || 0), 0) / followedCount) : 0;
             
             const avgRewardWhenNotFollowed = (totalGames - followedCount) > 0 ?
                 Math.round(gameHistory.filter(r => !r.followedRecommendation)
-                    .reduce((sum, r) => sum + r.actualReward, 0) / (totalGames - followedCount)) : 0;
+                    .reduce((sum, r) => sum + (r.actualReward || 0), 0) / (totalGames - followedCount)) : 0;
 
             const totalMissedReward = gameHistory.reduce((sum, r) => sum + (r.missedReward || 0), 0);
             const accuracy = analyzeAccuracy();
@@ -2465,15 +2465,15 @@ https://gist.github.com/username/ghi789..."
                 </div>
                 <div class="stat-card">
                     <div class="stat-card-label">平均獎勵</div>
-                    <div class="stat-card-value">${avgReward.toLocaleString()}</div>
+                    <div class="stat-card-value">${(avgReward || 0).toLocaleString()}</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-card-label">最佳選擇率</div>
-                    <div class="stat-card-value">${Math.round(optimalCount/totalGames*100)}%</div>
+                    <div class="stat-card-value">${Math.round((optimalCount/totalGames*100) || 0)}%</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-card-label">推薦準確率</div>
-                    <div class="stat-card-value">${accuracy.recommendationAccuracy.toFixed(0)}%</div>
+                    <div class="stat-card-value">${(accuracy.recommendationAccuracy || 0).toFixed(0)}%</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-card-label">跟隨推薦次數</div>
@@ -2481,7 +2481,7 @@ https://gist.github.com/username/ghi789..."
                 </div>
                 <div class="stat-card">
                     <div class="stat-card-label">錯失總獎勵</div>
-                    <div class="stat-card-value" style="color: #e74c3c;">${totalMissedReward.toLocaleString()}</div>
+                    <div class="stat-card-value" style="color: #e74c3c;">${(totalMissedReward || 0).toLocaleString()}</div>
                 </div>
             `;
             
@@ -2562,11 +2562,11 @@ https://gist.github.com/username/ghi789..."
                 if (followedCount > 0 && (totalGames - followedCount) > 0) {
                     const diff = avgRewardWhenFollowed - avgRewardWhenNotFollowed;
                     if (diff > 100) {
-                        insights.push(`跟隨推薦平均多獲得 ${diff.toLocaleString()} MGP，強烈建議採納推薦`);
+                        insights.push(`跟隨推薦平均多獲得 ${(diff || 0).toLocaleString()} MGP，強烈建議採納推薦`);
                     } else if (diff < -100) {
-                        insights.push(`自行判斷平均多獲得 ${Math.abs(diff).toLocaleString()} MGP，你的直覺很準!`);
+                        insights.push(`自行判斷平均多獲得 ${(Math.abs(diff) || 0).toLocaleString()} MGP，你的直覺很準!`);
                     } else {
-                        insights.push(`跟隨推薦與自行選擇差異不大 (${Math.abs(diff)} MGP)`);
+                        insights.push(`跟隨推薦與自行選擇差異不大 (${Math.abs(diff) || 0} MGP)`);
                     }
                 }
 
@@ -2620,13 +2620,13 @@ https://gist.github.com/username/ghi789..."
                 // 最近趨勢
                 if (totalGames >= 5) {
                     const recent5 = gameHistory.slice(-5);
-                    const recent5Avg = Math.round(recent5.reduce((sum, r) => sum + r.actualReward, 0) / 5);
+                    const recent5Avg = Math.round(recent5.reduce((sum, r) => sum + (r.actualReward || 0), 0) / 5);
                     const recent5Optimal = recent5.filter(r => r.isOptimal).length;
                     
                     if (recent5Avg > avgReward * 1.2) {
-                        insights.push(`🔥 最近5局表現優異! 平均 ${recent5Avg.toLocaleString()} MGP，保持狀態!`);
+                        insights.push(`🔥 最近5局表現優異! 平均 ${(recent5Avg || 0).toLocaleString()} MGP，保持狀態!`);
                     } else if (recent5Avg < avgReward * 0.8) {
-                        insights.push(`⚠️ 最近5局表現下滑，平均 ${recent5Avg.toLocaleString()} MGP，建議更信任推薦`);
+                        insights.push(`⚠️ 最近5局表現下滑，平均 ${(recent5Avg || 0).toLocaleString()} MGP，建議更信任推薦`);
                     }
                     
                     if (recent5Optimal >= 4) {
@@ -2726,17 +2726,17 @@ https://gist.github.com/username/ghi789..."
                 return `
                     <div class="history-item ${className}">
                         <div class="history-item-header">
-                            <span>${record.selectedLine} ${isOptimal ? '🎯' : ''}</span>
-                            <span style="color: #e74c3c;">${record.actualReward.toLocaleString()} MGP</span>
+                            <span>${record.selectedLine || '未知線路'} ${isOptimal ? '🎯' : ''}</span>
+                            <span style="color: #e74c3c;">${(record.actualReward || 0).toLocaleString()} MGP</span>
                         </div>
                         <div class="history-item-detail">
                             選擇: ${record.selectedLineValues ? record.selectedLineValues.join('-') : '?'} ${record.selectedSum ? `(和:${record.selectedSum})` : ''} | 
                             ${(record.followedBalanced || record.followedConservative || record.followedAggressive || record.followedLearned) ? '✓ 採納推薦' : '⚠️ 自行選擇'}
                         </div>
-                        ${!isOptimal ? `
+                        ${!isOptimal && record.actualBestLine ? `
                             <div class="history-item-detail" style="color: #e67e22;">
-                                最佳: ${record.actualBestLine} (${record.actualBestReward.toLocaleString()} MGP) | 
-                                錯失: ${record.missedReward.toLocaleString()} MGP
+                                最佳: ${record.actualBestLine} (${(record.actualBestReward || 0).toLocaleString()} MGP) | 
+                                錯失: ${(record.missedReward || 0).toLocaleString()} MGP
                             </div>
                         ` : ''}
                         ${strategiesDisplay}
