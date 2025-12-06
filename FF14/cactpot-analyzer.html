@@ -1248,6 +1248,7 @@
                 <button class="btn-small btn-history" onclick="exportData()">📤 匯出數據</button>
                 <button class="btn-small btn-history" onclick="document.getElementById('importFile').click()">📥 匯入檔案</button>
                 <button class="btn-small btn-history" onclick="showGistImportDialog()">🔗 從Gist讀取</button>
+                <button class="btn-small btn-history" onclick="restoreBackup()" style="background: #3498db;">💾 恢復備份</button>
                 <button class="btn-small btn-clear" onclick="clearHistory()">清除歷史</button>
                 <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importData(event)">
             </div>
@@ -2232,10 +2233,9 @@ https://gist.github.com/username/ghi789..."
                 };
             });
 
-            // 找出實際的最佳線
-            const actualBestLine = allLinesData.reduce((best, current) => 
-                current.reward > best.reward ? current : best
-            );
+            // 找出實際的最佳線 (可能有多條線獎勵相同)
+            const maxReward = Math.max(...allLinesData.map(line => line.reward));
+            const actualBestLine = allLinesData.find(line => line.reward === maxReward);
 
             const record = {
                 timestamp: new Date().toISOString(),
@@ -2267,11 +2267,11 @@ https://gist.github.com/username/ghi789..."
                 // 舊版兼容
                 followedRecommendation: (gameInProgress.strategies.balanced || currentRecommendedLine?.name) === selectedLine.name,
                 
-                // 最佳線
+                // 最佳線 (改用獎勵比較而不是名稱比較)
                 actualBestLine: actualBestLine.name,
                 actualBestReward: actualBestLine.reward,
-                isOptimal: actualBestLine.name === selectedLine.name,
-                missedReward: actualBestLine.reward - actualReward,
+                isOptimal: actualReward === maxReward,  // ← 關鍵修改!
+                missedReward: maxReward - actualReward,
                 
                 // 4種策略是否推薦了最佳線
                 balancedWasOptimal: gameInProgress.strategies.balanced === actualBestLine.name,
@@ -2774,6 +2774,64 @@ https://gist.github.com/username/ghi789..."
             }
         }
 
+        function restoreBackup() {
+            // 找出所有備份
+            const backups = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('cactpotHistory_backup_')) {
+                    const timestamp = parseInt(key.replace('cactpotHistory_backup_', ''));
+                    const data = JSON.parse(localStorage.getItem(key));
+                    backups.push({
+                        key: key,
+                        timestamp: timestamp,
+                        date: new Date(timestamp).toLocaleString('zh-TW'),
+                        count: data.length
+                    });
+                }
+            }
+
+            if (backups.length === 0) {
+                alert('⚠️ 沒有找到備份');
+                return;
+            }
+
+            // 按時間排序,最新的在前
+            backups.sort((a, b) => b.timestamp - a.timestamp);
+
+            // 顯示選擇
+            let message = '📦 找到以下備份,請選擇要恢復的:\n\n';
+            backups.forEach((backup, index) => {
+                message += `${index + 1}. ${backup.date} (${backup.count} 局)\n`;
+            });
+            message += '\n輸入編號 (1-' + backups.length + '):';
+
+            const choice = prompt(message);
+            const index = parseInt(choice) - 1;
+
+            if (isNaN(index) || index < 0 || index >= backups.length) {
+                alert('❌ 無效的選擇');
+                return;
+            }
+
+            const selected = backups[index];
+            const backupData = JSON.parse(localStorage.getItem(selected.key));
+
+            if (confirm(`確定要恢復 ${selected.date} 的備份嗎?\n\n這將覆蓋目前的 ${gameHistory.length} 局記錄,恢復為 ${selected.count} 局`)) {
+                gameHistory = backupData;
+                localStorage.setItem('cactpotHistory', JSON.stringify(gameHistory));
+                updateHistoryDisplay();
+                
+                if (gameHistory.length >= 10) {
+                    updateStatisticalAnalysis();
+                    document.getElementById('statsAnalysisSection').classList.add('show');
+                }
+                document.getElementById('historySection').classList.add('show');
+                
+                alert(`✅ 已恢復備份!\n\n總計: ${gameHistory.length} 局`);
+            }
+        }
+
         function exportData() {
             if (gameHistory.length === 0) {
                 alert('⚠️ 沒有數據可以匯出!');
@@ -3162,6 +3220,17 @@ https://gist.github.com/username/ghi789..."
                 return;
             }
 
+            // 同步前備份本地數據
+            if (gameHistory.length > 0) {
+                try {
+                    const backupKey = `cactpotHistory_backup_${Date.now()}`;
+                    localStorage.setItem(backupKey, JSON.stringify(gameHistory));
+                    console.log(`✅ 已備份本地數據到: ${backupKey}`);
+                } catch (error) {
+                    console.warn('備份失敗:', error);
+                }
+            }
+
             const loadingMsg = showSyncNotification('🔄 正在同步...', false);
 
             try {
@@ -3171,32 +3240,49 @@ https://gist.github.com/username/ghi789..."
                     throw new Error(result.error);
                 }
 
+                console.log('=== 同步 Debug 資訊 ===');
+                console.log('本地原有記錄數:', gameHistory.length);
+                console.log('從數據源讀取記錄數:', result.data.length);
+
                 if (result.data.length === 0) {
                     alert('⚠️ 數據源中沒有有效數據');
                     return;
                 }
 
                 const existingTimestamps = new Set(gameHistory.map(r => r.timestamp));
+                console.log('本地已有 timestamps:', Array.from(existingTimestamps));
+                
                 let addedCount = 0;
                 let duplicateCount = 0;
+                let skippedNoTimestamp = 0;
 
-                result.data.forEach(record => {
+                result.data.forEach((record, index) => {
                     if (!record.timestamp) {
-                        console.warn('Record without timestamp:', record);
+                        console.warn(`記錄 ${index + 1} 沒有 timestamp:`, record);
+                        skippedNoTimestamp++;
                         return;
                     }
+                    
+                    console.log(`記錄 ${index + 1} timestamp:`, record.timestamp);
                     
                     if (!existingTimestamps.has(record.timestamp)) {
                         gameHistory.push(record);
                         existingTimestamps.add(record.timestamp); // 防止同一批數據內的重複
                         addedCount++;
+                        console.log(`  → 新增`);
                     } else {
                         duplicateCount++;
+                        console.log(`  → 跳過(重複)`);
                     }
                 });
 
                 gameHistory.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
                 localStorage.setItem('cactpotHistory', JSON.stringify(gameHistory));
+                
+                console.log('同步後總記錄數:', gameHistory.length);
+                console.log(`新增: ${addedCount}, 重複: ${duplicateCount}, 無timestamp: ${skippedNoTimestamp}`);
+                console.log('=== 同步完成 ===');
+                
                 updateHistoryDisplay();
                 
                 if (gameHistory.length >= 10) {
@@ -3207,11 +3293,16 @@ https://gist.github.com/username/ghi789..."
 
                 loadingMsg.remove();
                 
-                let syncMessage = `✅ 同步完成: 新增 ${addedCount} 局`;
+                let syncMessage = `✅ 同步完成!\n\n`;
+                syncMessage += `📥 從數據源讀取: ${result.data.length} 局\n`;
+                syncMessage += `➕ 新增: ${addedCount} 局\n`;
                 if (duplicateCount > 0) {
-                    syncMessage += ` | 跳過重複 ${duplicateCount} 局`;
+                    syncMessage += `⚠️ 跳過重複: ${duplicateCount} 局\n`;
                 }
-                syncMessage += ` | 總計 ${gameHistory.length} 局`;
+                if (skippedNoTimestamp > 0) {
+                    syncMessage += `⚠️ 無效記錄: ${skippedNoTimestamp} 局\n`;
+                }
+                syncMessage += `💾 目前總計: ${gameHistory.length} 局`;
                 
                 showSyncNotification(syncMessage, true, 5000);
 
@@ -4742,6 +4833,12 @@ https://gist.github.com/username/ghi789..."
             const balanced = [...allLines].sort((a, b) => {
                 const rewardA = a.type === 'confirmed' ? a.reward : a.medianReward;
                 const rewardB = b.type === 'confirmed' ? b.reward : b.medianReward;
+                
+                // 如果獎勵相同,優先選確定線
+                if (rewardA === rewardB) {
+                    if (a.type === 'confirmed' && b.type !== 'confirmed') return -1;
+                    if (b.type === 'confirmed' && a.type !== 'confirmed') return 1;
+                }
                 return rewardB - rewardA;
             })[0];
 
@@ -4749,6 +4846,12 @@ https://gist.github.com/username/ghi789..."
             const conservative = [...allLines].sort((a, b) => {
                 const minA = a.type === 'confirmed' ? a.reward : a.minReward;
                 const minB = b.type === 'confirmed' ? b.reward : b.minReward;
+                
+                // 如果最低獎勵相同,優先選確定線
+                if (minA === minB) {
+                    if (a.type === 'confirmed' && b.type !== 'confirmed') return -1;
+                    if (b.type === 'confirmed' && a.type !== 'confirmed') return 1;
+                }
                 return minB - minA;
             })[0];
 
@@ -4756,9 +4859,17 @@ https://gist.github.com/username/ghi789..."
             const aggressive = [...allLines].sort((a, b) => {
                 const maxA = a.type === 'confirmed' ? a.reward : a.maxReward;
                 const maxB = b.type === 'confirmed' ? b.reward : b.maxReward;
-                // 如果最高獎勵相同,優先選高獎機率高的
-                if (maxA === maxB && a.highRewardProb && b.highRewardProb) {
-                    return b.highRewardProb - a.highRewardProb;
+                
+                // 如果最高獎勵相同
+                if (maxA === maxB) {
+                    // 優先選確定線
+                    if (a.type === 'confirmed' && b.type !== 'confirmed') return -1;
+                    if (b.type === 'confirmed' && a.type !== 'confirmed') return 1;
+                    
+                    // 都是不確定線,選高獎機率高的
+                    if (a.highRewardProb && b.highRewardProb) {
+                        return b.highRewardProb - a.highRewardProb;
+                    }
                 }
                 return maxB - maxA;
             })[0];
