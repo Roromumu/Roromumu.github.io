@@ -1464,6 +1464,49 @@ https://gist.github.com/username/ghi789..."
         let gameHistory = JSON.parse(localStorage.getItem('cactpotHistory') || '[]');
         let currentRecommendedLine = null;
         
+        // 自動修復舊記錄的 isOptimal 判斷
+        (function fixOldRecords() {
+            let fixed = 0;
+            let skipped = 0;
+            
+            gameHistory.forEach((record, index) => {
+                // 檢查必要欄位是否存在
+                if (!record.allLines || record.actualReward === undefined) {
+                    console.warn(`記錄 ${index + 1} 缺少必要欄位,跳過修復`, record);
+                    skipped++;
+                    return;
+                }
+                
+                // 重新計算最高獎勵
+                const maxReward = Math.max(...record.allLines.map(line => line.reward));
+                const shouldBeOptimal = record.actualReward === maxReward;
+                
+                // 如果判斷不一致,修正它
+                if (record.isOptimal !== shouldBeOptimal) {
+                    console.log(`修復記錄 ${index + 1}:`, {
+                        selectedLine: record.selectedLine,
+                        actualReward: record.actualReward,
+                        maxReward: maxReward,
+                        oldIsOptimal: record.isOptimal,
+                        newIsOptimal: shouldBeOptimal
+                    });
+                    
+                    record.isOptimal = shouldBeOptimal;
+                    record.missedReward = maxReward - record.actualReward;
+                    fixed++;
+                }
+            });
+            
+            if (fixed > 0) {
+                console.log(`✅ 自動修復了 ${fixed} 筆舊記錄的 isOptimal 判斷`);
+                localStorage.setItem('cactpotHistory', JSON.stringify(gameHistory));
+            }
+            
+            if (skipped > 0) {
+                console.log(`⚠️ 跳過了 ${skipped} 筆無法修復的記錄`);
+            }
+        })();
+        
         // 追蹤遊戲進行中的推薦狀態 (在4個數字時保存)
         let gameInProgress = {
             hasRecommendation: false,
