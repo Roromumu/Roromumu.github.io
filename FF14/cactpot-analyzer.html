@@ -1621,9 +1621,22 @@ https://gist.github.com/username/ghi789..."
                 return;
             }
 
-            if (filledCount >= 4) {
+            if (filledCount >= 9) {
+                // 已填滿,不再推薦
                 recommendationBox.classList.remove('show');
-                recommendationContent.innerHTML = '已填入4個數字(初始1個+翻開3個)，可以點擊「分析」查看結果！';
+                return;
+            }
+            
+            if (filledCount >= 4 && filledCount < 9) {
+                // 4個數字已足夠,提示點分析
+                recommendationBox.classList.add('show');
+                recommendationContent.innerHTML = `
+                    <strong>✅ 已有足夠資訊 (${filledCount}/9 個數字)</strong>
+                    <div class="recommendation-reason">現在可以點「分析」查看4種策略推薦!</div>
+                    <div style="font-size: 12px; color: #999; margin-top: 5px;">
+                        或繼續手動翻牌收集更多資訊
+                    </div>
+                `;
                 return;
             }
 
@@ -1650,9 +1663,9 @@ https://gist.github.com/username/ghi789..."
 
                 const remainingFlips = 4 - filledCount;
                 recommendationContent.innerHTML = `
-                    <strong>第${filledCount}次翻開 → 推薦: ${posText}</strong>
+                    <strong>第${filledCount}次翻牌 → 推薦: ${posText}</strong>
                     <div class="recommendation-reason">${recommendation.reason}</div>
-                    <div class="recommendation-reason">還可以翻開 ${remainingFlips} 個位置</div>
+                    <div class="recommendation-reason">還可翻 ${remainingFlips} 個 | 共需4個數字即可分析</div>
                 `;
             } else {
                 recommendationBox.classList.remove('show');
@@ -1718,10 +1731,11 @@ https://gist.github.com/username/ghi789..."
             }
 
             if (filledCount === 3) {
-                // 最後一次翻開，做智能分析
+                // 第3次翻開，做智能分析
                 return getIntelligentRecommendation();
             }
 
+            // 4個數字已足夠,停止推薦
             return null;
         }
 
