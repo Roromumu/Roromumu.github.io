@@ -1603,6 +1603,11 @@ https://gist.github.com/username/ghi789..."
 
         function updateRecommendation() {
             const filledCount = usedNumbers.size;
+            console.log('=== updateRecommendation ===');
+            console.log('filledCount:', filledCount);
+            console.log('usedNumbers:', Array.from(usedNumbers));
+            console.log('grid:', grid);
+            
             const recommendationBox = document.getElementById('recommendationBox');
             const recommendationContent = document.getElementById('recommendationContent');
 
@@ -1674,12 +1679,14 @@ https://gist.github.com/username/ghi789..."
 
         function getNextRecommendation() {
             const filledCount = usedNumbers.size;
+            console.log('=== getNextRecommendation ===');
+            console.log('filledCount:', filledCount);
             
             // 策略：
             // 初始數字已有(filledCount=1) -> 推薦中間格 (如果中間未填)
             // 第1次翻開(filledCount=2) -> 推薦角落
             // 第2次翻開(filledCount=3) -> 根據已知資訊推薦
-            // 第3次翻開(filledCount=4) -> 已完成,不再推薦
+            // 第3次翻開後(filledCount=4) -> 停止推薦
             
             if (filledCount === 0) {
                 return null; // 等待填入初始數字
