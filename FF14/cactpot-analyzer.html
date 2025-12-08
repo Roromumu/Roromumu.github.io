@@ -1829,7 +1829,7 @@ https://gist.github.com/username/ghi789..."
                                 
                                 availableNumbers.forEach(num => {
                                     const targetSum = knownSum + num;
-                                    const reward = rewardTable[targetSum] || 0;
+                                    const reward = PAYOUTS[targetSum] || 0;
                                     totalReward += reward;
                                     validCount++;
                                 });
@@ -1842,7 +1842,7 @@ https://gist.github.com/username/ghi789..."
                                 // 如果有特別高的可能(>= 1000),標記機會
                                 availableNumbers.forEach(num => {
                                     const targetSum = knownSum + num;
-                                    const reward = rewardTable[targetSum] || 0;
+                                    const reward = PAYOUTS[targetSum] || 0;
                                     if (reward >= 1000) {
                                         highValueOpportunities.push({
                                             position: [r,c],
@@ -1862,7 +1862,7 @@ https://gist.github.com/username/ghi789..."
                                 for (let i = 0; i < availableNumbers.length; i++) {
                                     for (let j = i + 1; j < availableNumbers.length; j++) {
                                         const targetSum = knownSum + availableNumbers[i] + availableNumbers[j];
-                                        const reward = rewardTable[targetSum] || 0;
+                                        const reward = PAYOUTS[targetSum] || 0;
                                         possibleCombinations.push({
                                             sum: targetSum,
                                             reward: reward,
@@ -1907,7 +1907,7 @@ https://gist.github.com/username/ghi789..."
                                     for (let j = i + 1; j < availableNumbers.length; j++) {
                                         for (let k = j + 1; k < availableNumbers.length; k++) {
                                             const targetSum = availableNumbers[i] + availableNumbers[j] + availableNumbers[k];
-                                            const reward = rewardTable[targetSum] || 0;
+                                            const reward = PAYOUTS[targetSum] || 0;
                                             possibleCombinations.push(reward);
                                         }
                                     }
