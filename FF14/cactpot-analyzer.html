@@ -4332,6 +4332,20 @@ https://gist.github.com/username/ghi789..."
             // 訓練所有模型
             const models = trainMLModels();
             
+            // 如果數據不足,顯示提示
+            if (!models.decisionTree) {
+                mlContent.innerHTML = `
+                    <div style="padding: 20px; text-align: center; color: #999;">
+                        <div style="font-size: 48px; margin-bottom: 15px;">📊</div>
+                        <div style="font-size: 16px; margin-bottom: 10px;">需要更多數據</div>
+                        <div style="font-size: 14px;">
+                            至少需要 3 局完整記錄才能訓練機器學習模型
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
             // 模型1: 決策樹
             html += buildDecisionTreeCard(models.decisionTree);
             
@@ -4352,6 +4366,16 @@ https://gist.github.com/username/ghi789..."
 
         function trainMLModels() {
             const trainingData = gameHistory.filter(r => r.fullGrid && r.allLines);
+            
+            // 如果數據不足,返回空模型
+            if (trainingData.length < 3) {
+                return {
+                    decisionTree: null,
+                    bayesian: null,
+                    logistic: null,
+                    ensemble: null
+                };
+            }
             
             return {
                 decisionTree: trainDecisionTree(trainingData),
