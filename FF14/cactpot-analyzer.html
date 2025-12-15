@@ -4356,7 +4356,7 @@ https://gist.github.com/username/ghi789..."
             html += buildLogisticCard(models.logistic);
             
             // 模型4: 集成學習
-            html += buildEnsembleCard(models.ensemble);
+            html += buildEnsembleCard(models);  // ← 傳入整個models物件
             
             // 模型準確度對比
             html += buildAccuracyComparisonCard(models);
@@ -4667,6 +4667,11 @@ https://gist.github.com/username/ghi789..."
         }
 
         function buildEnsembleCard(models) {
+            // 檢查models和模型是否都存在
+            if (!models || !models.decisionTree || !models.bayesian || !models.logistic) {
+                return ''; // 數據不足,不顯示集成模型
+            }
+            
             // 集成學習：綜合所有模型的預測
             const avgAccuracy = (models.decisionTree.accuracy + models.bayesian.accuracy + models.logistic.accuracy) / 3;
             
@@ -4695,6 +4700,11 @@ https://gist.github.com/username/ghi789..."
         }
 
         function buildAccuracyComparisonCard(models) {
+            // 檢查models和模型是否都存在
+            if (!models || !models.decisionTree || !models.bayesian || !models.logistic) {
+                return ''; // 數據不足,不顯示對比
+            }
+            
             let html = '<div class="ml-model-card">';
             html += '<div class="ml-model-title" style="margin-bottom: 15px;">📊 模型準確度對比</div>';
             
