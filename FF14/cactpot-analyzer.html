@@ -2318,6 +2318,39 @@ https://gist.github.com/username/ghi789..."
             document.getElementById('recommendationContent').innerHTML = statsHtml;
         }
 
+        function autoFillReward() {
+            const selectedIndexElem = document.getElementById('selectedLineIndex');
+            const actualRewardElem = document.getElementById('actualReward');
+            
+            if (!selectedIndexElem || !actualRewardElem) return;
+            
+            const selectedLineName = selectedIndexElem.value;
+            
+            // 計算選擇的線的實際獎勵
+            const lines = [
+                {name: '第1橫列', cells: [[0,0], [0,1], [0,2]]},
+                {name: '第2橫列', cells: [[1,0], [1,1], [1,2]]},
+                {name: '第3橫列', cells: [[2,0], [2,1], [2,2]]},
+                {name: '第1直列', cells: [[0,0], [1,0], [2,0]]},
+                {name: '第2直列', cells: [[0,1], [1,1], [2,1]]},
+                {name: '第3直列', cells: [[0,2], [1,2], [2,2]]},
+                {name: '左斜線', cells: [[0,0], [1,1], [2,2]]},
+                {name: '右斜線', cells: [[0,2], [1,1], [2,0]]}
+            ];
+            
+            const selectedLine = lines.find(line => line.name === selectedLineName);
+            if (!selectedLine) return;
+            
+            const values = selectedLine.cells.map(([r,c]) => grid[r][c]);
+            const sum = values.reduce((a,b) => a+b, 0);
+            const reward = PAYOUTS[sum] || 0;
+            
+            // 自動填入獎勵
+            actualRewardElem.value = reward;
+            
+            console.log(`自動填入: ${selectedLineName} = ${sum}點 → ${reward} MGP`);
+        }
+
         function recordResult() {
             console.log('recordResult called');
             
@@ -4987,14 +5020,15 @@ https://gist.github.com/username/ghi789..."
                         </div>
                         <div style="margin-bottom: 15px;">
                             <label style="color: #666; font-size: 14px; margin-right: 10px;">你選擇的線:</label>
-                            <select id="selectedLineIndex" style="padding: 8px; border-radius: 8px; border: 2px solid #667eea; margin-right: 10px; font-size: 14px;">
-                                ${results.map((r) => `<option value="${r.name}">${r.name}</option>`).join('')}
+                            <select id="selectedLineIndex" onchange="autoFillReward()" style="padding: 8px; border-radius: 8px; border: 2px solid #667eea; margin-right: 10px; font-size: 14px;">
+                                ${results.map((r) => `<option value="${r.name}" data-reward="${r.reward || r.avgReward}">${r.name}</option>`).join('')}
                             </select>
                         </div>
                         <div style="margin-bottom: 15px;">
                             <label style="color: #666; font-size: 14px; margin-right: 10px;">實際獲得:</label>
-                            <input type="number" id="actualReward" placeholder="MGP" 
-                                   style="padding: 8px; border-radius: 8px; border: 2px solid #667eea; width: 120px; margin-right: 10px; font-size: 14px;">
+                            <input type="number" id="actualReward" placeholder="MGP" readonly
+                                   style="padding: 8px; border-radius: 8px; border: 2px solid #667eea; width: 120px; margin-right: 10px; font-size: 14px; background: #f0f0f0;">
+                            <span style="color: #999; font-size: 12px;">自動填入</span>
                         </div>
                         <button class="btn btn-history" onclick="recordResult()" style="padding: 10px 30px; background: #2ecc71; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; font-size: 15px;">
                             ✓ 記錄並優化
@@ -5003,6 +5037,14 @@ https://gist.github.com/username/ghi789..."
                 </div>
             `;
             resultsDiv.innerHTML = html + recordSection;
+            
+            // 如果所有格子都填完了,自動填入第一條線的獎勵
+            if (allFilled) {
+                // 使用setTimeout確保DOM已更新
+                setTimeout(() => {
+                    autoFillReward();
+                }, 100);
+            }
             
             // 顯示歷史區域
             if (gameHistory.length > 0) {
