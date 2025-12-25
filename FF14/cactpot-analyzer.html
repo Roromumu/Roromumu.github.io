@@ -1568,14 +1568,53 @@ https://gist.github.com/username/ghi789..."
 
         // 初始化格子點擊事件
         document.querySelectorAll('.cell').forEach(cell => {
-            cell.addEventListener('click', function() {
-                if (this.classList.contains('filled')) return;
+            // 左鍵點擊 - 選擇格子
+            cell.addEventListener('click', function(e) {
+                if (this.classList.contains('filled')) {
+                    // 已填入的格子,詢問是否清除
+                    if (confirm('要清除這個格子的數字嗎?')) {
+                        clearCell(this);
+                    }
+                    return;
+                }
                 
                 document.querySelectorAll('.cell').forEach(c => c.style.border = '3px solid #667eea');
                 this.style.border = '3px solid #e74c3c';
                 selectedCell = this;
             });
+            
+            // 右鍵點擊 - 快速清除
+            cell.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                if (this.classList.contains('filled')) {
+                    clearCell(this);
+                }
+            });
         });
+        
+        // 清除單個格子
+        function clearCell(cell) {
+            const row = parseInt(cell.dataset.row);
+            const col = parseInt(cell.dataset.col);
+            const number = grid[row][col];
+            
+            if (number !== null) {
+                // 清除格子
+                grid[row][col] = null;
+                cell.textContent = '?';
+                cell.classList.remove('filled');
+                cell.style.border = '3px solid #667eea';
+                
+                // 釋放數字按鈕
+                usedNumbers.delete(number);
+                document.querySelector(`.number-btn[data-number="${number}"]`).disabled = false;
+                
+                // 更新推薦
+                updateRecommendation();
+                
+                console.log(`清除格子 (${row},${col}): ${number}`);
+            }
+        }
 
         // 初始化數字按鈕點擊事件
         document.querySelectorAll('.number-btn').forEach(btn => {
@@ -1622,6 +1661,9 @@ https://gist.github.com/username/ghi789..."
                 recommendationContent.innerHTML = `
                     <strong>請先填入遊戲開始時顯示的數字</strong>
                     <div class="recommendation-reason">遊戲會隨機顯示一個位置的數字</div>
+                    <div style="margin-top: 10px; font-size: 12px; color: #999; border-top: 1px solid #e0e0e0; padding-top: 10px;">
+                        💡 小提示: 點擊已填入的格子可清除數字 | 右鍵點擊快速清除
+                    </div>
                 `;
                 return;
             }
