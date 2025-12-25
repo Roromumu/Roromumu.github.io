@@ -1254,6 +1254,19 @@
             </div>
 
             <div id="historyContent">
+                <div class="adaptive-weights-status" id="adaptiveWeightsStatus" style="
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    padding: 15px;
+                    border-radius: 10px;
+                    margin-bottom: 20px;
+                    display: none;
+                ">
+                    <div style="font-weight: bold; margin-bottom: 10px; font-size: 16px;">
+                        🤖 自適應權重系統
+                    </div>
+                    <div id="adaptiveWeightsContent"></div>
+                </div>
                 <div class="history-stats" id="historyStats"></div>
                 <div class="insights-box" id="insightsBox" style="display: none;"></div>
                 <div class="history-list" id="historyList"></div>
@@ -1463,6 +1476,43 @@ https://gist.github.com/username/ghi789..."
         let usedNumbers = new Set();
         let gameHistory = JSON.parse(localStorage.getItem('cactpotHistory') || '[]');
         let currentRecommendedLine = null;
+        
+        // 🤖 自適應權重系統
+        let adaptiveWeights = {
+            // 歷史評分權重
+            historicalWeight: 0.2,  // 歷史評分權重 (動態調整)
+            minWeight: 0.05,        // 最小權重
+            maxWeight: 0.5,         // 最大權重
+            adjustStep: 0.02,       // 每次調整幅度
+            
+            // 集成學習權重
+            ensembleWeights: {
+                decisionTree: 0.30,   // 決策樹權重 (動態調整)
+                bayesian: 0.40,       // 貝氏分類權重 (動態調整)
+                logistic: 0.30        // 邏輯迴歸權重 (動態調整)
+            },
+            
+            lastUpdate: null,       // 上次更新時間
+            performanceHistory: [], // 權重表現記錄 (最多保留20筆)
+            evaluationInterval: 5,  // 每5局評估一次
+            enabled: true           // 是否啟用自適應
+        };
+        
+        // 從localStorage載入自適應權重
+        (function loadAdaptiveWeights() {
+            const saved = localStorage.getItem('adaptiveWeights');
+            if (saved) {
+                try {
+                    const loaded = JSON.parse(saved);
+                    adaptiveWeights = {...adaptiveWeights, ...loaded};
+                    console.log('✅ 載入自適應權重:');
+                    console.log('  歷史權重:', adaptiveWeights.historicalWeight.toFixed(3));
+                    console.log('  集成權重:', adaptiveWeights.ensembleWeights);
+                } catch (e) {
+                    console.warn('⚠️ 載入權重失敗,使用預設值');
+                }
+            }
+        })();
         
         // 自動修復舊記錄的 isOptimal 判斷
         (function fixOldRecords() {
@@ -2282,10 +2332,13 @@ https://gist.github.com/username/ghi789..."
                     const userSuccessRate = perf.selectedCount > 0 ? 
                         perf.selectedReward / perf.selectedCount / historicalAvg : 1;
                     
-                    // 調整分數 (保留原始avgReward，加入歷史加權)
-                    result.historicalScore = result.avgReward * (1 + optimalRate * 0.2);
+                    // 調整分數 (使用自適應權重)
+                    const currentWeight = adaptiveWeights.enabled ? 
+                        adaptiveWeights.historicalWeight : 0.2;
+                    result.historicalScore = result.avgReward * (1 + optimalRate * currentWeight);
                     result.historicalOptimalRate = optimalRate;
                     result.userFamiliarity = perf.selectedCount;
+                    result.appliedWeight = currentWeight; // 記錄使用的權重
                 }
             });
 
@@ -2358,6 +2411,209 @@ https://gist.github.com/username/ghi789..."
             `;
             
             document.getElementById('recommendationContent').innerHTML = statsHtml;
+        }
+
+        // 🤖 評估並調整自適應權重
+        function evaluateAndAdjustWeights() {
+            if (!adaptiveWeights.enabled) return;
+            
+            // 需要至少15局數據才開始調整
+            if (gameHistory.length < 15) {
+                console.log('📊 數據不足,需要至少15局 (目前' + gameHistory.length + '局)');
+                return;
+            }
+            
+            // 檢查是否該評估了
+            const lastEvalGames = adaptiveWeights.performanceHistory.length > 0 ?
+                adaptiveWeights.performanceHistory[adaptiveWeights.performanceHistory.length - 1].totalGames : 0;
+            
+            if (gameHistory.length - lastEvalGames < adaptiveWeights.evaluationInterval) {
+                return; // 還沒到評估間隔
+            }
+            
+            console.log('\n🤖 === 開始自適應權重評估 ===');
+            
+            // === 1. 評估歷史評分權重 ===
+            adjustHistoricalWeight();
+            
+            // === 2. 評估集成學習權重 ===
+            adjustEnsembleWeights();
+            
+            console.log('=== 評估完成 ===\n');
+        }
+        
+        // 調整歷史評分權重
+        function adjustHistoricalWeight() {
+            // 取最近20局評估AI策略表現
+            const recentGames = gameHistory.slice(-20).filter(r => 
+                r.recommendedByLearned && r.learnedWasOptimal !== undefined
+            );
+            
+            if (recentGames.length < 10) {
+                console.log('⚠️ AI推薦記錄不足,跳過歷史權重調整');
+                return;
+            }
+            
+            // 計算當前權重下的準確率
+            const currentAccuracy = recentGames.filter(r => r.learnedWasOptimal).length / recentGames.length;
+            const currentWeight = adaptiveWeights.historicalWeight;
+            
+            console.log('\n📊 歷史評分權重評估:');
+            console.log(`當前權重: ${currentWeight.toFixed(3)}`);
+            console.log(`當前準確率: ${(currentAccuracy * 100).toFixed(1)}% (${recentGames.filter(r => r.learnedWasOptimal).length}/${recentGames.length})`);
+            
+            // 記錄當前表現
+            adaptiveWeights.performanceHistory.push({
+                weight: currentWeight,
+                accuracy: currentAccuracy,
+                ensembleWeights: {...adaptiveWeights.ensembleWeights},
+                totalGames: gameHistory.length,
+                timestamp: new Date().toISOString()
+            });
+            
+            // 保持最多20筆記錄
+            if (adaptiveWeights.performanceHistory.length > 20) {
+                adaptiveWeights.performanceHistory.shift();
+            }
+            
+            // 如果有至少2筆歷史記錄,可以比較趨勢
+            if (adaptiveWeights.performanceHistory.length >= 2) {
+                const prevPerf = adaptiveWeights.performanceHistory[adaptiveWeights.performanceHistory.length - 2];
+                const prevAccuracy = prevPerf.accuracy;
+                
+                console.log(`上次準確率: ${(prevAccuracy * 100).toFixed(1)}%`);
+                
+                // 決定調整方向
+                let adjustment = 0;
+                
+                if (currentAccuracy > prevAccuracy + 0.05) {
+                    // 表現明顯變好,繼續同方向
+                    const lastAdjustment = currentWeight - prevPerf.weight;
+                    adjustment = Math.sign(lastAdjustment) * adaptiveWeights.adjustStep;
+                    console.log('✅ 表現改善,繼續調整');
+                } else if (currentAccuracy < prevAccuracy - 0.05) {
+                    // 表現明顯變差,反向調整
+                    const lastAdjustment = currentWeight - prevPerf.weight;
+                    adjustment = -Math.sign(lastAdjustment) * adaptiveWeights.adjustStep;
+                    console.log('⚠️ 表現下降,反向調整');
+                } else if (currentAccuracy < 0.35) {
+                    // 準確率太低,嘗試增加權重
+                    adjustment = adaptiveWeights.adjustStep;
+                    console.log('📈 準確率偏低,增加歷史權重');
+                } else if (currentAccuracy > 0.45) {
+                    // 準確率已經很好,可能過擬合,減少權重
+                    adjustment = -adaptiveWeights.adjustStep * 0.5;
+                    console.log('📉 準確率良好,微調權重');
+                }
+                
+                if (adjustment !== 0) {
+                    const newWeight = Math.max(
+                        adaptiveWeights.minWeight,
+                        Math.min(adaptiveWeights.maxWeight, currentWeight + adjustment)
+                    );
+                    
+                    if (newWeight !== currentWeight) {
+                        adaptiveWeights.historicalWeight = newWeight;
+                        console.log(`🔧 歷史權重調整: ${currentWeight.toFixed(3)} → ${newWeight.toFixed(3)} (${adjustment > 0 ? '+' : ''}${adjustment.toFixed(3)})`);
+                    } else {
+                        console.log('⚖️ 已達權重邊界,無法繼續調整');
+                    }
+                }
+            } else {
+                console.log('📊 首次評估,記錄基準');
+            }
+        }
+        
+        // 調整集成學習權重
+        function adjustEnsembleWeights() {
+            // 需要至少30局數據
+            if (gameHistory.length < 30) {
+                console.log('⚠️ 集成學習需要至少30局數據,跳過權重調整');
+                return;
+            }
+            
+            console.log('\n📊 集成學習權重評估:');
+            
+            // 計算各策略的表現
+            const strategies = ['balanced', 'conservative', 'aggressive'];
+            const strategyPerformance = {};
+            
+            strategies.forEach(strategy => {
+                const key = strategy.charAt(0).toUpperCase() + strategy.slice(1); // Balanced, Conservative...
+                const records = gameHistory.filter(r => r[`recommendedBy${key}`]);
+                
+                if (records.length >= 10) {
+                    const optimal = records.filter(r => r[`${strategy}WasOptimal`]).length;
+                    strategyPerformance[strategy] = optimal / records.length;
+                } else {
+                    strategyPerformance[strategy] = null;
+                }
+            });
+            
+            console.log('各策略準確率:');
+            console.log(`  ⚖️  平衡: ${strategyPerformance.balanced !== null ? (strategyPerformance.balanced * 100).toFixed(1) + '%' : 'N/A'}`);
+            console.log(`  🛡️  保守: ${strategyPerformance.conservative !== null ? (strategyPerformance.conservative * 100).toFixed(1) + '%' : 'N/A'}`);
+            console.log(`  🚀 激進: ${strategyPerformance.aggressive !== null ? (strategyPerformance.aggressive * 100).toFixed(1) + '%' : 'N/A'}`);
+            
+            // 如果有足夠數據,調整權重
+            const validStrategies = Object.entries(strategyPerformance).filter(([_, acc]) => acc !== null);
+            
+            if (validStrategies.length >= 2) {
+                // 使用軟最大化(softmax)重新分配權重
+                const performances = validStrategies.map(([_, acc]) => acc);
+                const total = performances.reduce((a, b) => a + b, 0);
+                
+                // 計算新權重 (保留一定基礎權重,避免極端)
+                const baseWeight = 0.15; // 最低保底權重
+                const adjustableWeight = 1.0 - baseWeight * 3;
+                
+                const newWeights = {};
+                validStrategies.forEach(([strategy, acc], idx) => {
+                    const proportionalWeight = (acc / total) * adjustableWeight;
+                    newWeights[strategy] = baseWeight + proportionalWeight;
+                });
+                
+                // 映射到集成學習的模型名稱
+                const modelMapping = {
+                    'balanced': 'bayesian',      // 平衡對應貝氏
+                    'conservative': 'decisionTree', // 保守對應決策樹
+                    'aggressive': 'logistic'     // 激進對應邏輯迴歸
+                };
+                
+                let changed = false;
+                Object.entries(newWeights).forEach(([strategy, weight]) => {
+                    const modelName = modelMapping[strategy];
+                    const oldWeight = adaptiveWeights.ensembleWeights[modelName];
+                    const diff = Math.abs(weight - oldWeight);
+                    
+                    // 只有變化超過2%才調整
+                    if (diff > 0.02) {
+                        adaptiveWeights.ensembleWeights[modelName] = weight;
+                        console.log(`🔧 ${modelName}權重: ${(oldWeight * 100).toFixed(1)}% → ${(weight * 100).toFixed(1)}%`);
+                        changed = true;
+                    }
+                });
+                
+                // 確保總和為1
+                const sum = Object.values(adaptiveWeights.ensembleWeights).reduce((a, b) => a + b, 0);
+                if (Math.abs(sum - 1.0) > 0.01) {
+                    Object.keys(adaptiveWeights.ensembleWeights).forEach(key => {
+                        adaptiveWeights.ensembleWeights[key] /= sum;
+                    });
+                }
+                
+                if (changed) {
+                    console.log('✅ 集成學習權重已調整');
+                } else {
+                    console.log('⚖️ 權重變化不大,保持現有配置');
+                }
+            } else {
+                console.log('⚠️ 有效策略數據不足,保持現有權重');
+            }
+            
+            // 更新時間戳記並儲存
+            adaptiveWeights.lastUpdate = new Date().toISOString();
+            localStorage.setItem('adaptiveWeights', JSON.stringify(adaptiveWeights));
         }
 
         function autoFillReward() {
@@ -2568,6 +2824,116 @@ https://gist.github.com/username/ghi789..."
             if (gameHistory.length >= 10) {
                 document.getElementById('statsAnalysisSection').classList.add('show');
             }
+            
+            // 🤖 評估並調整自適應權重
+            evaluateAndAdjustWeights();
+        }
+
+        // 🤖 更新自適應權重狀態顯示
+        function updateAdaptiveWeightsDisplay() {
+            const statusDiv = document.getElementById('adaptiveWeightsStatus');
+            const contentDiv = document.getElementById('adaptiveWeightsContent');
+            
+            if (!statusDiv || !contentDiv) return;
+            
+            // 至少15局才顯示
+            if (gameHistory.length < 15) {
+                statusDiv.style.display = 'none';
+                return;
+            }
+            
+            statusDiv.style.display = 'block';
+            
+            const historicalWeight = adaptiveWeights.historicalWeight;
+            const ensembleWeights = adaptiveWeights.ensembleWeights;
+            const perfHistory = adaptiveWeights.performanceHistory;
+            
+            let html = '';
+            
+            // === 歷史評分權重 ===
+            html += `<div style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.2);">`;
+            html += `<div style="font-size: 15px; font-weight: bold; margin-bottom: 10px;">📊 歷史評分權重</div>`;
+            
+            html += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">`;
+            html += `<div>`;
+            html += `<div style="font-size: 13px; opacity: 0.9;">當前權重</div>`;
+            html += `<div style="font-size: 24px; font-weight: bold;">${historicalWeight.toFixed(3)}</div>`;
+            html += `</div>`;
+            html += `<div style="text-align: right;">`;
+            html += `<div style="font-size: 13px; opacity: 0.9;">範圍</div>`;
+            html += `<div style="font-size: 13px;">${adaptiveWeights.minWeight} - ${adaptiveWeights.maxWeight}</div>`;
+            html += `</div>`;
+            html += `</div>`;
+            
+            // 進度條
+            const progress = ((historicalWeight - adaptiveWeights.minWeight) / 
+                            (adaptiveWeights.maxWeight - adaptiveWeights.minWeight)) * 100;
+            html += `<div style="background: rgba(255,255,255,0.2); height: 6px; border-radius: 3px; overflow: hidden;">`;
+            html += `<div style="background: white; height: 100%; width: ${progress}%; transition: width 0.3s;"></div>`;
+            html += `</div>`;
+            html += `</div>`;
+            
+            // === 集成學習權重 ===
+            if (gameHistory.length >= 30) {
+                html += `<div style="margin-bottom: 15px;">`;
+                html += `<div style="font-size: 15px; font-weight: bold; margin-bottom: 10px;">🎯 集成學習權重</div>`;
+                
+                const weights = [
+                    {name: '決策樹', key: 'decisionTree', color: '#3498db'},
+                    {name: '貝氏分類', key: 'bayesian', color: '#9b59b6'},
+                    {name: '邏輯迴歸', key: 'logistic', color: '#e67e22'}
+                ];
+                
+                weights.forEach(w => {
+                    const weight = ensembleWeights[w.key];
+                    const barWidth = weight * 100;
+                    
+                    html += `<div style="margin: 8px 0;">`;
+                    html += `<div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 3px;">`;
+                    html += `<span>${w.name}</span>`;
+                    html += `<span style="font-weight: bold;">${(weight * 100).toFixed(1)}%</span>`;
+                    html += `</div>`;
+                    html += `<div style="background: rgba(255,255,255,0.2); height: 6px; border-radius: 3px; overflow: hidden;">`;
+                    html += `<div style="background: ${w.color}; height: 100%; width: ${barWidth}%; transition: width 0.3s;"></div>`;
+                    html += `</div>`;
+                    html += `</div>`;
+                });
+                
+                html += `</div>`;
+            }
+            
+            // 調整記錄
+            if (perfHistory.length > 0) {
+                const latest = perfHistory[perfHistory.length - 1];
+                html += `<div style="font-size: 12px; opacity: 0.9; margin-bottom: 5px;">`;
+                html += `最近評估: AI準確率 ${(latest.accuracy * 100).toFixed(1)}%`;
+                html += `</div>`;
+                
+                if (perfHistory.length >= 2) {
+                    const prev = perfHistory[perfHistory.length - 2];
+                    const weightChange = historicalWeight - prev.weight;
+                    const accChange = latest.accuracy - prev.accuracy;
+                    
+                    if (Math.abs(weightChange) > 0.001 || Math.abs(accChange) > 0.01) {
+                        html += `<div style="font-size: 11px; opacity: 0.8;">`;
+                        if (Math.abs(weightChange) > 0.001) {
+                            html += `歷史權重${weightChange > 0 ? '↑' : '↓'} ${Math.abs(weightChange).toFixed(3)}`;
+                        }
+                        if (Math.abs(accChange) > 0.01) {
+                            if (Math.abs(weightChange) > 0.001) html += ' | ';
+                            html += `準確率${accChange > 0 ? '+' : ''}${(accChange * 100).toFixed(1)}%`;
+                        }
+                        html += `</div>`;
+                    }
+                }
+            }
+            
+            // 說明
+            html += `<div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.2); font-size: 11px; opacity: 0.8;">`;
+            html += `💡 系統每${adaptiveWeights.evaluationInterval}局自動評估表現並動態調整權重`;
+            html += `</div>`;
+            
+            contentDiv.innerHTML = html;
         }
 
         function analyzeAccuracy() {
@@ -2650,6 +3016,9 @@ https://gist.github.com/username/ghi789..."
         }
 
         function updateHistoryDisplay() {
+            // 更新自適應權重顯示
+            updateAdaptiveWeightsDisplay();
+            
             try {
             const statsDiv = document.getElementById('historyStats');
             const listDiv = document.getElementById('historyList');
@@ -4747,27 +5116,51 @@ https://gist.github.com/username/ghi789..."
                 return ''; // 數據不足,不顯示集成模型
             }
             
-            // 集成學習：綜合所有模型的預測
+            // 集成學習：使用自適應權重綜合所有模型
+            const weights = adaptiveWeights.ensembleWeights;
+            const weightedAccuracy = 
+                models.decisionTree.accuracy * weights.decisionTree +
+                models.bayesian.accuracy * weights.bayesian +
+                models.logistic.accuracy * weights.logistic;
+            
+            // 簡單平均(作為對比)
             const avgAccuracy = (models.decisionTree.accuracy + models.bayesian.accuracy + models.logistic.accuracy) / 3;
             
             let html = '<div class="ml-model-card" style="border-color: #2ecc71; background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 50%);">';
             html += '<div class="ml-model-header">';
             html += '<div class="ml-model-title">🎯 集成學習 (推薦)</div>';
-            html += `<div class="ml-model-status ml-status-ready">準確率 ${(avgAccuracy * 100).toFixed(1)}%</div>`;
+            html += `<div class="ml-model-status ml-status-ready">準確率 ${(weightedAccuracy * 100).toFixed(1)}%</div>`;
             html += '</div>';
             
-            html += '<div style="color: #666; font-size: 13px; margin-bottom: 15px;">綜合所有模型的投票結果</div>';
+            html += '<div style="color: #666; font-size: 13px; margin-bottom: 15px;">使用自適應權重綜合所有模型</div>';
             
             html += '<div style="margin-top: 15px;">';
             html += '<strong>📋 模型權重配置:</strong><br>';
-            html += '• 決策樹: 30%<br>';
-            html += '• 貝氏分類: 40%<br>';
-            html += '• 邏輯迴歸: 30%<br>';
+            html += `<div style="display: flex; justify-content: space-between; margin: 5px 0;">`;
+            html += `<span>• 決策樹:</span>`;
+            html += `<span style="font-weight: bold; color: #3498db;">${(weights.decisionTree * 100).toFixed(1)}%</span>`;
+            html += `</div>`;
+            html += `<div style="display: flex; justify-content: space-between; margin: 5px 0;">`;
+            html += `<span>• 貝氏分類:</span>`;
+            html += `<span style="font-weight: bold; color: #9b59b6;">${(weights.bayesian * 100).toFixed(1)}%</span>`;
+            html += `</div>`;
+            html += `<div style="display: flex; justify-content: space-between; margin: 5px 0;">`;
+            html += `<span>• 邏輯迴歸:</span>`;
+            html += `<span style="font-weight: bold; color: #e67e22;">${(weights.logistic * 100).toFixed(1)}%</span>`;
+            html += `</div>`;
             html += '</div>';
+            
+            // 顯示權重加成效果
+            const improvement = ((weightedAccuracy - avgAccuracy) * 100).toFixed(1);
+            if (Math.abs(parseFloat(improvement)) > 0.1) {
+                html += `<div style="margin-top: 10px; padding: 8px; background: rgba(46, 204, 113, 0.1); border-radius: 6px; font-size: 12px;">`;
+                html += `🎯 自適應加成: ${improvement > 0 ? '+' : ''}${improvement}% (vs 平均 ${(avgAccuracy * 100).toFixed(1)}%)`;
+                html += `</div>`;
+            }
 
             html += '<div style="margin-top: 15px; padding: 15px; background: white; border-radius: 8px;">';
             html += '<strong>💡 使用建議:</strong><br>';
-            html += '集成學習通常比單一模型更穩定可靠。在遊戲中可優先參考此模型的推薦。';
+            html += '集成學習使用自適應權重,根據各模型實際表現動態調整。準確率通常比單一模型更穩定可靠。';
             html += '</div>';
 
             html += '</div>';
