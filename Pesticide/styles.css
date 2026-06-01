@@ -82,6 +82,7 @@ html, body {
     width: 100%;
     max-width: 800px;
     /* aspect-ratio 由 JS 動態設定，配合攝像頭實際比例，避免黑邊 */
+    max-height: 50vh;  /* 限制高度，確保按鈕與結果區同時可見 */
     object-fit: contain;    /* contain：不裁切，確保紅框座標正確對應實際像素 */
     background-color: black;
     display: block;
