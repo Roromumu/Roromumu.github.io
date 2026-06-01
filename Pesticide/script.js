@@ -61,7 +61,9 @@ async function startCamera() {
         video.onloadedmetadata = () => {
             video.play();
             // 動態設定 aspect-ratio，配合攝像頭實際輸出比例，消除黑邊
-            video.style.aspectRatio = `${video.videoWidth} / ${video.videoHeight}`;
+            if (video.videoWidth && video.videoHeight) {
+                video.style.aspectRatio = video.videoWidth + ' / ' + video.videoHeight;
+            }
         };
         analyzeBtn.disabled = false;
         stopBtn.disabled = true;
@@ -141,9 +143,8 @@ function makeDraggable(box) {
 // 擷取紅框區域的像素資料，計算並回傳 RGB 平均值
 // 需要將螢幕座標換算為攝像頭真實解析度座標
 //
-// 注意：CSS 使用 object-fit: cover，畫面會被裁切以填滿容器
-// 因此換算時需要額外計算裁切偏移量（cropOffsetX / cropOffsetY）
-// 才能正確對應到攝像頭實際像素位置
+// CSS 使用 object-fit: contain，畫面不裁切
+// 直接用 scaleX / scaleY 換算螢幕座標到攝像頭真實解析度座標
 // ════════════════════════════════════════════════════════
 function getAverageColor(box) {
     // 建立隱形 canvas，解析度與攝像頭原始解析度相同
@@ -159,33 +160,22 @@ function getAverageColor(box) {
     const displayW = videoRect.width;
     const displayH = videoRect.height;
 
-    // 計算 object-fit: cover 的縮放比例
-    // cover 會選擇「讓畫面完全覆蓋容器」的比例，也就是取較大的那個縮放值
+    // 計算螢幕顯示大小與攝像頭真實解析度的縮放比例（object-fit: contain）
     const scaleX = video.videoWidth  / displayW;
     const scaleY = video.videoHeight / displayH;
-    const scale  = Math.min(scaleX, scaleY); // cover 用較小的縮放比（畫面放大到剛好覆蓋）
 
-    // 計算畫面被裁切的偏移量（cover 會讓畫面居中，多餘的部分裁掉）
-    // cropOffsetX：左右各裁掉多少像素（原始解析度）
-    // cropOffsetY：上下各裁掉多少像素（原始解析度）
-    const cropOffsetX = (video.videoWidth  - displayW * scale) / 2;
-    const cropOffsetY = (video.videoHeight - displayH * scale) / 2;
-
-    // 取得紅框在螢幕上的座標與尺寸
+    // 取得紅框在螢幕上的座標與尺寸，換算為真實解析度座標
     const boxLeft   = redBoxPositions[box.id].left;
     const boxTop    = redBoxPositions[box.id].top;
     const boxWidth  = box.offsetWidth;
     const boxHeight = box.offsetHeight;
-
-    // 換算為攝像頭真實解析度座標（加上裁切偏移）
-    const boxX = boxLeft  * scale + cropOffsetX;
-    const boxY = boxTop   * scale + cropOffsetY;
-    const boxW = boxWidth  * scale;
-    const boxH = boxHeight * scale;
+    const boxX = boxLeft   * scaleX;
+    const boxY = boxTop    * scaleY;
+    const boxW = boxWidth  * scaleX;
+    const boxH = boxHeight * scaleY;
 
     // 確保不超出 canvas 邊界
     const safeX = Math.max(0, Math.min(boxX, canvas.width  - boxW));
-    const safeY = Math.max(0, Math.min(boxY, canvas.height - boxH));
     const safeY = Math.max(0, Math.min(boxY, canvas.height - boxH));
 
     // 取得紅框區域所有像素資料（格式：[R,G,B,A, R,G,B,A, ...]）
