@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>檢測結算（詳細版）</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #f0fff0;
+      font-family: "Segoe UI", sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px;
+      min-height: 100vh;
+      overflow-y: auto;
+    }
+    h1 { font-size: 20px; color: #2c5f2d; margin: 8px 0 16px; }
+
+    /* ── 卡片 ── */
+    .card {
+      width: 100%; max-width: 420px;
+      background: #fff;
+      border: 3px solid #333;
+      border-radius: 14px;
+      padding: 16px 20px;
+      margin-bottom: 14px;
+      box-shadow: 2px 2px 6px #ccc;
+    }
+    .card h2 {
+      font-size: 16px; color: #2c5f2d;
+      margin: 0 0 12px;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 6px;
+    }
+
+    /* ── 主要結果（無圓圈，改為大字顯示）── */
+    .main-card { background: #fff8dc; text-align: center; }
+    .main-rate {
+      font-size: 52px; font-weight: bold;
+      margin: 12px 0 4px;
+      line-height: 1;
+    }
+    .main-label { font-size: 13px; color: #777; margin-bottom: 4px; }
+    .main-status { font-size: 24px; font-weight: bold; margin: 6px 0 4px; }
+    .main-sublabel { font-size: 12px; color: #999; }
+
+    /* ── 版本比較表格 ── */
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th {
+      background: #e8f5e9; color: #2c5f2d;
+      padding: 6px 8px; text-align: center; font-weight: bold;
+    }
+    td { padding: 6px 8px; text-align: center; border-bottom: 1px solid #eee; }
+    tr:last-child td { border-bottom: none; }
+    .tag-main {
+      background: #2c5f2d; color: white;
+      font-size: 11px; padding: 1px 6px;
+      border-radius: 8px; margin-left: 4px;
+    }
+
+    /* ── 資訊列 ── */
+    .info-row {
+      display: flex; justify-content: space-between;
+      font-size: 14px; padding: 4px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-key { color: #555; }
+    .info-val { font-weight: bold; color: #333; }
+
+    /* ── 頭尾B值詳細 ── */
+    .ht-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .ht-box {
+      background: #f9fff9;
+      border: 1px solid #c8e6c9;
+      border-radius: 8px;
+      padding: 8px;
+      text-align: center;
+      font-size: 13px;
+    }
+    .ht-box .ht-label { color: #555; margin-bottom: 4px; }
+    .ht-box .ht-val { font-size: 18px; font-weight: bold; color: #2c5f2d; }
+    .ht-arrow {
+      text-align: center; font-size: 20px;
+      color: #aaa; margin: 4px 0;
+      grid-column: span 2;
+    }
+
+    /* ── 錯誤 ── */
+    .error-card { background: #fff3f3; border-color: #e74c3c; }
+    .error-card h2 { color: #c0392b; }
+    .error-item {
+      display: flex; align-items: flex-start;
+      gap: 8px; font-size: 14px; color: #c0392b; padding: 4px 0;
+    }
+    .error-icon { font-size: 16px; flex-shrink: 0; }
+
+    /* ── 按鈕 ── */
+    .btn-group {
+      width: 100%; max-width: 420px;
+      display: flex; gap: 10px; margin-bottom: 20px;
+    }
+    button {
+      flex: 1; padding: 12px; font-size: 15px;
+      border: none; border-radius: 10px;
+      cursor: pointer; font-weight: bold;
+    }
+    .btn-home   { background: #6ab04c; color: white; }
+    .btn-export { background: #3498db; color: white; }
+    .btn-home:hover   { background: #4a943e; }
+    .btn-export:hover { background: #2176ae; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+  <h1>🌿 農藥檢測結算報告</h1>
+
+  <!-- ① 主要結果（版本B，大字顯示，無圓圈） -->
+  <div class="card main-card">
+    <div class="main-label">主要結果（相對閾值版本B）</div>
+    <div class="main-rate" id="mainRate">--</div>
+    <div class="main-status" id="mainStatus">--</div>
+    <div class="main-sublabel">農試所判定標準</div>
+  </div>
+
+  <!-- ② 各版本比較表 -->
+  <div class="card">
+    <h2>📊 各版本抑制率比較</h2>
+    <table>
+      <thead>
+        <tr><th>版本</th><th>方法</th><th>抑制率</th><th>判定</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>版本B <span class="tag-main">主要</span></td>
+          <td>相對閾值+斜率</td>
+          <td id="rateB">--</td><td id="judgeB">--</td>
+        </tr>
+        <tr>
+          <td>版本A</td>
+          <td>固定閾值+斜率</td>
+          <td id="rateA">--</td><td id="judgeA">--</td>
+        </tr>
+        <tr>
+          <td>版本C</td>
+          <td>頭尾B值法</td>
+          <td id="rateC">--</td><td id="judgeC">--</td>
+        </tr>
+        <tr>
+          <td>原始</td>
+          <td>無起點偵測</td>
+          <td id="rateOrig">--</td><td id="judgeOrig">--</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ③ 版本C 頭尾B值詳細 -->
+  <div class="card">
+    <h2>📉 版本C 頭尾B值詳細</h2>
+    <div class="ht-grid">
+      <div class="ht-box">
+        <div class="ht-label">空白組 起點B值</div>
+        <div class="ht-val" id="htB1Start">--</div>
+      </div>
+      <div class="ht-box">
+        <div class="ht-label">樣品組 起點B值</div>
+        <div class="ht-val" id="htB2Start">--</div>
+      </div>
+      <div class="ht-arrow">↓ 反應後 ↓</div>
+      <div class="ht-box">
+        <div class="ht-label">空白組 終點B值</div>
+        <div class="ht-val" id="htB1End">--</div>
+      </div>
+      <div class="ht-box">
+        <div class="ht-label">樣品組 終點B值</div>
+        <div class="ht-val" id="htB2End">--</div>
+      </div>
+      <div class="ht-box" style="grid-column: span 1;">
+        <div class="ht-label">空白組 B值下降</div>
+        <div class="ht-val" id="htDelta1">--</div>
+      </div>
+      <div class="ht-box" style="grid-column: span 1;">
+        <div class="ht-label">樣品組 B值下降</div>
+        <div class="ht-val" id="htDelta2">--</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ④ 反應起點資訊 -->
+  <div class="card">
+    <h2>🔍 反應起點偵測結果</h2>
+    <div class="info-row">
+      <span class="info-key">版本A 空白組起點（筆）</span>
+      <span class="info-val" id="startA_b1">--</span>
+    </div>
+    <div class="info-row">
+      <span class="info-key">版本A 樣品組起點（筆）</span>
+      <span class="info-val" id="startA_b2">--</span>
+    </div>
+    <div class="info-row">
+      <span class="info-key">版本B 空白組起點（筆）</span>
+      <span class="info-val" id="startB_b1">--</span>
+    </div>
+    <div class="info-row">
+      <span class="info-key">版本B 樣品組起點（筆）</span>
+      <span class="info-val" id="startB_b2">--</span>
+    </div>
+    <div style="font-size:12px; color:#999; margin-top:8px;">
+      * -1 表示未偵測到反應，以第 0 筆代替
+    </div>
+  </div>
+
+  <!-- ⑤ 錯誤提示 -->
+  <div class="card error-card hidden" id="errorCard">
+    <h2>⚠️ 錯誤與警告</h2>
+    <div id="errorList"></div>
+  </div>
+
+  <!-- ⑥ 按鈕 -->
+  <div class="btn-group">
+    <button class="btn-home" onclick="location.href='intro.html'">返回主頁</button>
+    <button class="btn-export" onclick="exportExcel()">匯出 Excel</button>
+  </div>
+
+  <script>
+  // ════════════════════════════════════════════════════════
+  // 從 localStorage 讀取所有資料
+  // ════════════════════════════════════════════════════════
+  const rateB     = localStorage.getItem("rate");
+  const rateA     = localStorage.getItem("rate_fixedThreshold");
+  const rateC     = localStorage.getItem("rate_headtail");
+  const rateOrig  = localStorage.getItem("rate_original");
+  const htB1Start = localStorage.getItem("headtail_b1_start");
+  const htB1End   = localStorage.getItem("headtail_b1_end");
+  const htB2Start = localStorage.getItem("headtail_b2_start");
+  const htB2End   = localStorage.getItem("headtail_b2_end");
+  const startA_b1 = localStorage.getItem("reaction_start_b1_fixed");
+  const startA_b2 = localStorage.getItem("reaction_start_b2_fixed");
+  const startB_b1 = localStorage.getItem("reaction_start_b1_relative");
+  const startB_b2 = localStorage.getItem("reaction_start_b2_relative");
+  const rawLogStr = localStorage.getItem("logRGBValues");
+  const rawLog    = rawLogStr ? JSON.parse(rawLogStr) : [];
+
+  // 讀完後清除，避免下次誤讀舊資料
+  ["rate","rate_fixedThreshold","rate_headtail","rate_original",
+   "headtail_b1_start","headtail_b1_end","headtail_b2_start","headtail_b2_end",
+   "reaction_start_b1_fixed","reaction_start_b2_fixed",
+   "reaction_start_b1_relative","reaction_start_b2_relative",
+   "logRGBValues"].forEach(k => localStorage.removeItem(k));
+
+
+  // ════════════════════════════════════════════════════════
+  // 輔助：抑制率字串 → 數字
+  // ════════════════════════════════════════════════════════
+  function parseRate(str) {
+    if (!str || str === "N/A") return null;
+    return parseFloat(str.replace("%", ""));
+  }
+
+
+  // ════════════════════════════════════════════════════════
+  // 輔助：數值 → 判定顏色與標籤
+  // ════════════════════════════════════════════════════════
+  function getJudgment(val) {
+    if (val === null) return { color: "#999", label: "無資料" };
+    if (val < -10 || val > 100) return { color: "#999", label: "數值異常" };
+    if (val < 0) val = 0;
+    if (val <= 35) return { color: "green",  label: "✅ 合格" };
+    if (val <= 45) return { color: "orange", label: "⚠️ 有點危險" };
+    return              { color: "red",    label: "❌ 不合格" };
+  }
+
+
+  // ════════════════════════════════════════════════════════
+  // 錯誤偵測
+  // ════════════════════════════════════════════════════════
+  function detectErrors() {
+    const errors = [];
+
+    if (rateB === null) {
+      errors.push("未接收到任何分析資料，請重新進行分析。");
+    }
+
+    const valB = parseRate(rateB);
+    if (valB !== null && (valB < -10 || valB > 100)) {
+      errors.push(`版本B 抑制率異常（${rateB}），可能原因：光源不穩定、紅框位置偏移、或試管未正確放置。`);
+    }
+
+    const valA = parseRate(rateA);
+    if (valA !== null && (valA < -10 || valA > 100)) {
+      errors.push(`版本A 抑制率異常（${rateA}），固定閾值可能不適合此次光源條件。`);
+    }
+
+    const valC = parseRate(rateC);
+    if (valC !== null && (valC < -10 || valC > 100)) {
+      errors.push(`版本C 頭尾B值法抑制率異常（${rateC}），可能原因：B值未明顯下降或兩組變化方向相反。`);
+    }
+
+    if (startB_b1 === "-1") {
+      errors.push("版本B 未偵測到空白組反應起點，已從第 0 筆開始計算。");
+    }
+    if (startB_b2 === "-1") {
+      errors.push("版本B 未偵測到樣品組反應起點，已從第 0 筆開始計算。");
+    }
+    if (startA_b1 === "-1") {
+      errors.push("版本A 未偵測到空白組反應起點（固定閾值過高？）。");
+    }
+    if (startA_b2 === "-1") {
+      errors.push("版本A 未偵測到樣品組反應起點（固定閾值過高？）。");
+    }
+
+    if (rawLog.length === 0) {
+      errors.push("未找到原始 RGB 紀錄，Excel 匯出將只包含統計摘要。");
+    }
+
+    // 四版本結果差異過大（超過 20%）
+    const rates = [valB, valA, valC, parseRate(rateOrig)].filter(v => v !== null);
+    const maxDiff = Math.max(...rates) - Math.min(...rates);
+    if (rates.length >= 2 && maxDiff > 20) {
+      errors.push(`各版本結果差異達 ${maxDiff.toFixed(1)}%，建議檢查光源穩定性或閾值設定。`);
+    }
+
+    return errors;
+  }
+
+
+  // ════════════════════════════════════════════════════════
+  // 渲染各區塊
+  // ════════════════════════════════════════════════════════
+
+  // 主要結果（大字，無圓圈）
+  function renderMain(val, judgment) {
+    const rateEl  = document.getElementById('mainRate');
+    const statEl  = document.getElementById('mainStatus');
+    if (val === null) {
+      rateEl.textContent  = "無資料";
+      statEl.textContent  = "—";
+      rateEl.style.color  = "#999";
+      statEl.style.color  = "#999";
+    } else {
+      rateEl.textContent  = val.toFixed(2) + "%";
+      statEl.textContent  = judgment.label;
+      rateEl.style.color  = judgment.color;
+      statEl.style.color  = judgment.color;
+    }
+  }
+
+  // 版本比較表格一列
+  function renderRow(rateId, judgeId, rateStr) {
+    const val = parseRate(rateStr);
+    const j   = getJudgment(val);
+    document.getElementById(rateId).textContent  = rateStr ?? "N/A";
+    document.getElementById(judgeId).textContent = j.label;
+    document.getElementById(judgeId).style.color = j.color;
+  }
+
+  // 起點資訊
+  function renderStart(id, val) {
+    const el = document.getElementById(id);
+    if (val === null || val === "-1" || val === -1) {
+      el.textContent = "未偵測到";
+      el.style.color = "#e74c3c";
+    } else {
+      el.textContent = `第 ${val} 筆（約 ${val * 2} 秒）`;
+      el.style.color = "#2c5f2d";
+    }
+  }
+
+  // 頭尾B值區塊
+  function renderHeadTail() {
+    const b1s = parseFloat(htB1Start ?? 0);
+    const b1e = parseFloat(htB1End   ?? 0);
+    const b2s = parseFloat(htB2Start ?? 0);
+    const b2e = parseFloat(htB2End   ?? 0);
+
+    document.getElementById('htB1Start').textContent = htB1Start ?? "--";
+    document.getElementById('htB1End').textContent   = htB1End   ?? "--";
+    document.getElementById('htB2Start').textContent = htB2Start ?? "--";
+    document.getElementById('htB2End').textContent   = htB2End   ?? "--";
+
+    const d1 = (b1s - b1e).toFixed(3);
+    const d2 = (b2s - b2e).toFixed(3);
+    const d1El = document.getElementById('htDelta1');
+    const d2El = document.getElementById('htDelta2');
+    d1El.textContent = d1;
+    d2El.textContent = d2;
+    // 下降（正值）為綠色，上升（負值）為紅色
+    d1El.style.color = parseFloat(d1) >= 0 ? "#2c5f2d" : "#e74c3c";
+    d2El.style.color = parseFloat(d2) >= 0 ? "#2c5f2d" : "#e74c3c";
+  }
+
+  // 錯誤提示
+  function renderErrors(errors) {
+    if (errors.length === 0) return;
+    document.getElementById('errorCard').classList.remove('hidden');
+    document.getElementById('errorList').innerHTML = errors.map(e =>
+      `<div class="error-item"><span class="error-icon">⚠️</span><span>${e}</span></div>`
+    ).join('');
+  }
+
+
+  // ════════════════════════════════════════════════════════
+  // exportExcel()
+  // ════════════════════════════════════════════════════════
+  function exportExcel() {
+    const wb = XLSX.utils.book_new();
+
+    // 工作表1：統計摘要
+    const summaryData = [
+      ["農藥抑制率分析報告"],
+      ["匯出時間", new Date().toLocaleString()],
+      [],
+      ["版本", "方法", "抑制率", "判定"],
+      ["版本B（主要）", "相對閾值+斜率",  rateB    ?? "N/A", getJudgment(parseRate(rateB)).label],
+      ["版本A",         "固定閾值+斜率",  rateA    ?? "N/A", getJudgment(parseRate(rateA)).label],
+      ["版本C",         "頭尾B值法",      rateC    ?? "N/A", getJudgment(parseRate(rateC)).label],
+      ["原始版本",      "無起點偵測",     rateOrig ?? "N/A", getJudgment(parseRate(rateOrig)).label],
+      [],
+      ["版本C 頭尾B值詳細"],
+      ["組別", "起點B值", "終點B值", "B值下降量"],
+      ["空白組", htB1Start ?? "N/A", htB1End ?? "N/A",
+        htB1Start && htB1End ? (parseFloat(htB1Start) - parseFloat(htB1End)).toFixed(3) : "N/A"],
+      ["樣品組", htB2Start ?? "N/A", htB2End ?? "N/A",
+        htB2Start && htB2End ? (parseFloat(htB2Start) - parseFloat(htB2End)).toFixed(3) : "N/A"],
+      [],
+      ["反應起點偵測結果"],
+      ["版本", "組別", "起點（筆）", "對應時間（秒）"],
+      ["版本A", "空白組", startA_b1 ?? "N/A", startA_b1 >= 0 ? startA_b1 * 2 : "N/A"],
+      ["版本A", "樣品組", startA_b2 ?? "N/A", startA_b2 >= 0 ? startA_b2 * 2 : "N/A"],
+      ["版本B", "空白組", startB_b1 ?? "N/A", startB_b1 >= 0 ? startB_b1 * 2 : "N/A"],
+      ["版本B", "樣品組", startB_b2 ?? "N/A", startB_b2 >= 0 ? startB_b2 * 2 : "N/A"],
+    ];
+
+    const errors = detectErrors();
+    if (errors.length > 0) {
+      summaryData.push([], ["錯誤與警告"]);
+      errors.forEach(e => summaryData.push(["⚠️", e]));
+    }
+
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(summaryData), "統計摘要");
+
+    // 工作表2：原始 RGB 紀錄
+    if (rawLog.length > 0) {
+      const header = [
+        "時間點(秒)",
+        "空白組R", "空白組G", "空白組B",
+        "樣品組R", "樣品組G", "樣品組B",
+        "空白組B_slope", "樣品組B_slope"
+      ];
+      const rows = rawLog.map(e => [
+        e.time,
+        e.color1?.r ?? "", e.color1?.g ?? "", e.color1?.b ?? "",
+        e.color2?.r ?? "", e.color2?.g ?? "", e.color2?.b ?? "",
+        e.slope?.b1 ?? "", e.slope?.b2 ?? ""
+      ]);
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([header, ...rows]), "原始RGB紀錄");
+    } else {
+      XLSX.utils.book_append_sheet(
+        wb, XLSX.utils.aoa_to_sheet([["無原始RGB紀錄資料"]]), "原始RGB紀錄"
+      );
+    }
+
+    const ts = new Date().toISOString().slice(0,16).replace("T","_").replace(":","");
+    XLSX.writeFile(wb, `農藥檢測_${ts}.xlsx`);
+  }
+
+
+  // ════════════════════════════════════════════════════════
+  // 頁面初始化
+  // ════════════════════════════════════════════════════════
+  (function init() {
+    const valB = parseRate(rateB);
+    const judgment = getJudgment(valB);
+
+    renderMain(valB, judgment);
+    renderRow("rateB",    "judgeB",    rateB);
+    renderRow("rateA",    "judgeA",    rateA);
+    renderRow("rateC",    "judgeC",    rateC);
+    renderRow("rateOrig", "judgeOrig", rateOrig);
+    renderHeadTail();
+    renderStart("startA_b1", startA_b1);
+    renderStart("startA_b2", startA_b2);
+    renderStart("startB_b1", startB_b1);
+    renderStart("startB_b2", startB_b2);
+    renderErrors(detectErrors());
+
+    // 自動匯出
+    setTimeout(exportExcel, 500);
+  })();
+  </script>
+
+</body>
+</html>
