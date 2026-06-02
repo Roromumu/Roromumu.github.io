@@ -36,8 +36,8 @@ const REACTION_DURATION = 120; // 第二階段計時長度（秒）
 // 版本B：相對閾值，slope 超過「初始B值 x 比例」視為反應開始
 // 兩版本都計算，最終以版本B為主要輸出
 // ════════════════════════════════════════════════════════
-const REACTION_FIXED_THRESHOLD = 0.1;           // 版本A 固定閾值
-const REACTION_RELATIVE_THRESHOLD_RATIO = 0.005; // 版本B 相對比例（1%）
+const REACTION_FIXED_THRESHOLD = 0.5;           // 版本A 固定閾值
+const REACTION_RELATIVE_THRESHOLD_RATIO = 0.01; // 版本B 相對比例（1%）
 const REACTION_CONFIRM_COUNT = 3;               // 連續幾筆超過閾值才確認起點
 
 
