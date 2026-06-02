@@ -411,12 +411,114 @@
 
 
   // ════════════════════════════════════════════════════════
+  // 計算過程輔助函式（供 Excel 工作表使用）
+  // ════════════════════════════════════════════════════════
+
+  // 移除極端值（頭尾各 count 筆）
+  function removeOutliers(values, count = 3) {
+    const sorted = [...values].sort((a, b) => a - b);
+    return sorted.slice(count, sorted.length - count);
+  }
+
+  // 滑動平均
+  function movingAverage(values, windowSize = 5) {
+    const result = [];
+    for (let i = 0; i <= values.length - windowSize; i++) {
+      const win = values.slice(i, i + windowSize);
+      result.push(win.reduce((s, v) => s + v, 0) / win.length);
+    }
+    return result;
+  }
+
+  // 中位數
+  function median(arr) {
+    const mid = Math.floor(arr.length / 2);
+    return arr.length % 2 === 0 ? (arr[mid-1] + arr[mid]) / 2 : arr[mid];
+  }
+
+  // 四分位數計算（回傳詳細步驟）
+  function calcQuartilesDetail(values) {
+    const filtered = values.filter(v => typeof v === 'number' && !isNaN(v));
+    const trimmed  = removeOutliers(filtered, 3);
+    const q2 = median(trimmed);
+    const lower = trimmed.slice(0, Math.floor(trimmed.length / 2));
+    const q1 = median(lower);
+    return { filtered, trimmed, q1, q2 };
+  }
+
+  // 找反應起點（連續3筆超過閾值）
+  function findStart(slopes, useRelative, initB) {
+    const threshold = useRelative ? initB * 0.01 : 0.5;
+    let count = 0;
+    for (let i = 0; i < slopes.length; i++) {
+      if (slopes[i] > threshold) {
+        count++;
+        if (count >= 3) return i - 2;
+      } else { count = 0; }
+    }
+    return -1;
+  }
+
+
+  // ════════════════════════════════════════════════════════
   // exportExcel()
+  // 工作表清單：
+  //   1. 統計摘要
+  //   2. 原始RGB紀錄
+  //   3. 計算過程（slope、滑動平均、四分位數各步驟）
+  //   4. 圖表資料_B值變化（供折線圖使用）
+  //   5. 圖表資料_版本比較（供長條圖使用）
   // ════════════════════════════════════════════════════════
   function exportExcel() {
     const wb = XLSX.utils.book_new();
 
-    // 工作表1：統計摘要
+    // ── 準備計算過程資料 ──────────────────────────────────
+    const validData = rawLog.filter(e =>
+      e.slope && !isNaN(parseFloat(e.slope?.b1)) && !isNaN(parseFloat(e.slope?.b2))
+    );
+    const rawB1 = validData.map(e => parseFloat(e.slope.b1));
+    const rawB2 = validData.map(e => parseFloat(e.slope.b2));
+    const initB1 = rawLog.length > 0 ? parseFloat(rawLog[0].color1?.b ?? 200) : 200;
+    const initB2 = rawLog.length > 0 ? parseFloat(rawLog[0].color2?.b ?? 200) : 200;
+    const DURATION_SAMPLES = 60; // 120秒 / 2秒 = 60筆
+
+    // 版本A 起點
+    const sA_b1 = findStart(rawB1, false, initB1);
+    const sA_b2 = findStart(rawB2, false, initB2);
+    const trimA_b1 = rawB1.slice(sA_b1 >= 0 ? sA_b1 : 0, (sA_b1 >= 0 ? sA_b1 : 0) + DURATION_SAMPLES);
+    const trimA_b2 = rawB2.slice(sA_b2 >= 0 ? sA_b2 : 0, (sA_b2 >= 0 ? sA_b2 : 0) + DURATION_SAMPLES);
+
+    // 版本B 起點
+    const sB_b1 = findStart(rawB1, true, initB1);
+    const sB_b2 = findStart(rawB2, true, initB2);
+    const trimB_b1 = rawB1.slice(sB_b1 >= 0 ? sB_b1 : 0, (sB_b1 >= 0 ? sB_b1 : 0) + DURATION_SAMPLES);
+    const trimB_b2 = rawB2.slice(sB_b2 >= 0 ? sB_b2 : 0, (sB_b2 >= 0 ? sB_b2 : 0) + DURATION_SAMPLES);
+
+    // 滑動平均
+    const maA_b1 = movingAverage(trimA_b1, 5);
+    const maA_b2 = movingAverage(trimA_b2, 5);
+    const maB_b1 = movingAverage(trimB_b1, 5);
+    const maB_b2 = movingAverage(trimB_b2, 5);
+    const maOrig_b1 = movingAverage(rawB1, 5);
+    const maOrig_b2 = movingAverage(rawB2, 5);
+
+    // 四分位數詳細
+    const qA_b1 = calcQuartilesDetail(maA_b1);
+    const qA_b2 = calcQuartilesDetail(maA_b2);
+    const qB_b1 = calcQuartilesDetail(maB_b1);
+    const qB_b2 = calcQuartilesDetail(maB_b2);
+    const qO_b1 = calcQuartilesDetail(maOrig_b1);
+    const qO_b2 = calcQuartilesDetail(maOrig_b2);
+
+    // 抑制率計算
+    function calcRate(q1, q2) {
+      const r1 = q1.q1 !== 0 ? (1 - q2.q1 / q1.q1) * 100 : null;
+      const r2 = q1.q2 !== 0 ? (1 - q2.q2 / q1.q2) * 100 : null;
+      return (r1 !== null && r2 !== null) ? ((r1 + r2) / 2).toFixed(2) + "%" : "N/A";
+    }
+
+
+    // ── 工作表1：統計摘要 ────────────────────────────────
     const summaryData = [
       ["農藥抑制率分析報告"],
       ["匯出時間", new Date().toLocaleString()],
@@ -435,22 +537,21 @@
         htB2Start && htB2End ? (parseFloat(htB2Start) - parseFloat(htB2End)).toFixed(3) : "N/A"],
       [],
       ["反應起點偵測結果"],
-      ["版本", "組別", "起點（筆）", "對應時間（秒）"],
-      ["版本A", "空白組", startA_b1 ?? "N/A", startA_b1 >= 0 ? startA_b1 * 2 : "N/A"],
-      ["版本A", "樣品組", startA_b2 ?? "N/A", startA_b2 >= 0 ? startA_b2 * 2 : "N/A"],
-      ["版本B", "空白組", startB_b1 ?? "N/A", startB_b1 >= 0 ? startB_b1 * 2 : "N/A"],
-      ["版本B", "樣品組", startB_b2 ?? "N/A", startB_b2 >= 0 ? startB_b2 * 2 : "N/A"],
+      ["版本", "組別", "起點（筆）", "對應時間（秒）", "閾值"],
+      ["版本A", "空白組", sA_b1 >= 0 ? sA_b1 : "未偵測", sA_b1 >= 0 ? sA_b1*2 : "N/A", "固定 0.5"],
+      ["版本A", "樣品組", sA_b2 >= 0 ? sA_b2 : "未偵測", sA_b2 >= 0 ? sA_b2*2 : "N/A", "固定 0.5"],
+      ["版本B", "空白組", sB_b1 >= 0 ? sB_b1 : "未偵測", sB_b1 >= 0 ? sB_b1*2 : "N/A", `相對 ${(initB1*0.01).toFixed(2)}`],
+      ["版本B", "樣品組", sB_b2 >= 0 ? sB_b2 : "未偵測", sB_b2 >= 0 ? sB_b2*2 : "N/A", `相對 ${(initB2*0.01).toFixed(2)}`],
     ];
-
     const errors = detectErrors();
     if (errors.length > 0) {
       summaryData.push([], ["錯誤與警告"]);
       errors.forEach(e => summaryData.push(["⚠️", e]));
     }
-
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(summaryData), "統計摘要");
 
-    // 工作表2：原始 RGB 紀錄
+
+    // ── 工作表2：原始RGB紀錄 ─────────────────────────────
     if (rawLog.length > 0) {
       const header = [
         "時間點(秒)",
@@ -466,11 +567,147 @@
       ]);
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([header, ...rows]), "原始RGB紀錄");
     } else {
-      XLSX.utils.book_append_sheet(
-        wb, XLSX.utils.aoa_to_sheet([["無原始RGB紀錄資料"]]), "原始RGB紀錄"
-      );
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["無原始RGB紀錄資料"]]), "原始RGB紀錄");
     }
 
+
+    // ── 工作表3：完整計算過程 ────────────────────────────
+    const calcData = [
+      ["完整計算過程"],
+      [],
+
+      // ─ 步驟1：原始 slope ─
+      ["【步驟1】原始 B值斜率（每2秒變化量）"],
+      ["筆次", "空白組slope", "樣品組slope"],
+      ...rawB1.map((v, i) => [i+1, v.toFixed(5), (rawB2[i] ?? "").toString()]),
+      [],
+
+      // ─ 步驟2：版本A 裁切 ─
+      ["【步驟2-A】版本A 固定閾值（0.5）裁切後資料"],
+      ["空白組起點筆次", sA_b1 >= 0 ? sA_b1 : "未偵測"],
+      ["樣品組起點筆次", sA_b2 >= 0 ? sA_b2 : "未偵測"],
+      ["筆次", "空白組slope(裁切後)", "樣品組slope(裁切後)"],
+      ...trimA_b1.map((v, i) => [i+1, v.toFixed(5), (trimA_b2[i] ?? "").toString()]),
+      [],
+
+      // ─ 步驟2：版本B 裁切 ─
+      ["【步驟2-B】版本B 相對閾值（初始B值×1%）裁切後資料"],
+      ["空白組初始B值", initB1.toFixed(3), "閾值", (initB1*0.01).toFixed(3)],
+      ["樣品組初始B值", initB2.toFixed(3), "閾值", (initB2*0.01).toFixed(3)],
+      ["空白組起點筆次", sB_b1 >= 0 ? sB_b1 : "未偵測"],
+      ["樣品組起點筆次", sB_b2 >= 0 ? sB_b2 : "未偵測"],
+      ["筆次", "空白組slope(裁切後)", "樣品組slope(裁切後)"],
+      ...trimB_b1.map((v, i) => [i+1, v.toFixed(5), (trimB_b2[i] ?? "").toString()]),
+      [],
+
+      // ─ 步驟3：滑動平均（windowSize=5）─
+      ["【步驟3】滑動平均（每5筆）"],
+      ["版本", "筆次", "空白組MA", "樣品組MA"],
+      ...maA_b1.map((v, i) => ["版本A", i+1, v.toFixed(5), (maA_b2[i] ?? "").toString()]),
+      [],
+      ...maB_b1.map((v, i) => ["版本B", i+1, v.toFixed(5), (maB_b2[i] ?? "").toString()]),
+      [],
+      ...maOrig_b1.map((v, i) => ["原始", i+1, v.toFixed(5), (maOrig_b2[i] ?? "").toString()]),
+      [],
+
+      // ─ 步驟4：去極端值 ─
+      ["【步驟4】去除極端值（頭尾各3筆）"],
+      ["版本", "組別", "去除前筆數", "去除後筆數", "最小值", "最大值"],
+      ["版本A", "空白組", maA_b1.length, qA_b1.trimmed.length,
+        Math.min(...qA_b1.trimmed).toFixed(5), Math.max(...qA_b1.trimmed).toFixed(5)],
+      ["版本A", "樣品組", maA_b2.length, qA_b2.trimmed.length,
+        Math.min(...qA_b2.trimmed).toFixed(5), Math.max(...qA_b2.trimmed).toFixed(5)],
+      ["版本B", "空白組", maB_b1.length, qB_b1.trimmed.length,
+        Math.min(...qB_b1.trimmed).toFixed(5), Math.max(...qB_b1.trimmed).toFixed(5)],
+      ["版本B", "樣品組", maB_b2.length, qB_b2.trimmed.length,
+        Math.min(...qB_b2.trimmed).toFixed(5), Math.max(...qB_b2.trimmed).toFixed(5)],
+      ["原始", "空白組", maOrig_b1.length, qO_b1.trimmed.length,
+        Math.min(...qO_b1.trimmed).toFixed(5), Math.max(...qO_b1.trimmed).toFixed(5)],
+      ["原始", "樣品組", maOrig_b2.length, qO_b2.trimmed.length,
+        Math.min(...qO_b2.trimmed).toFixed(5), Math.max(...qO_b2.trimmed).toFixed(5)],
+      [],
+
+      // ─ 步驟5：四分位數 ─
+      ["【步驟5】四分位數（Q1=下四分位數, Q2=中位數）"],
+      ["版本", "組別", "Q1", "Q2"],
+      ["版本A", "空白組", qA_b1.q1.toFixed(5), qA_b1.q2.toFixed(5)],
+      ["版本A", "樣品組", qA_b2.q1.toFixed(5), qA_b2.q2.toFixed(5)],
+      ["版本B", "空白組", qB_b1.q1.toFixed(5), qB_b1.q2.toFixed(5)],
+      ["版本B", "樣品組", qB_b2.q1.toFixed(5), qB_b2.q2.toFixed(5)],
+      ["原始",  "空白組", qO_b1.q1.toFixed(5), qO_b1.q2.toFixed(5)],
+      ["原始",  "樣品組", qO_b2.q1.toFixed(5), qO_b2.q2.toFixed(5)],
+      [],
+
+      // ─ 步驟6：抑制率公式 ─
+      ["【步驟6】抑制率計算"],
+      ["公式", "抑制率 = (1 - 樣品組Q / 空白組Q) × 100%，取Q1和Q2各算一次後平均"],
+      ["版本", "用Q1算", "用Q2算", "平均（最終）"],
+      ["版本A",
+        qA_b1.q1 !== 0 ? ((1 - qA_b2.q1/qA_b1.q1)*100).toFixed(2)+"%" : "N/A",
+        qA_b1.q2 !== 0 ? ((1 - qA_b2.q2/qA_b1.q2)*100).toFixed(2)+"%" : "N/A",
+        rateA ?? "N/A"],
+      ["版本B",
+        qB_b1.q1 !== 0 ? ((1 - qB_b2.q1/qB_b1.q1)*100).toFixed(2)+"%" : "N/A",
+        qB_b1.q2 !== 0 ? ((1 - qB_b2.q2/qB_b1.q2)*100).toFixed(2)+"%" : "N/A",
+        rateB ?? "N/A"],
+      ["原始",
+        qO_b1.q1 !== 0 ? ((1 - qO_b2.q1/qO_b1.q1)*100).toFixed(2)+"%" : "N/A",
+        qO_b1.q2 !== 0 ? ((1 - qO_b2.q2/qO_b1.q2)*100).toFixed(2)+"%" : "N/A",
+        rateOrig ?? "N/A"],
+      [],
+
+      // ─ 步驟7：版本C 頭尾法 ─
+      ["【步驟7】版本C 頭尾B值法"],
+      ["公式", "抑制率 = (1 - 樣品組B值下降量 / 空白組B值下降量) × 100%"],
+      ["組別", "起點B值", "終點B值", "下降量"],
+      ["空白組", htB1Start ?? "N/A", htB1End ?? "N/A",
+        htB1Start && htB1End ? (parseFloat(htB1Start)-parseFloat(htB1End)).toFixed(3) : "N/A"],
+      ["樣品組", htB2Start ?? "N/A", htB2End ?? "N/A",
+        htB2Start && htB2End ? (parseFloat(htB2Start)-parseFloat(htB2End)).toFixed(3) : "N/A"],
+      ["最終抑制率", rateC ?? "N/A"],
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(calcData), "完整計算過程");
+
+
+    // ── 工作表4：圖表資料_B值隨時間變化（折線圖用）────────
+    // 提供空白組和樣品組的 B 值原始資料，讓 Excel 可以畫折線圖
+    const bChartHeader = ["時間(秒)", "空白組B值", "樣品組B值", "空白組B_slope", "樣品組B_slope"];
+    const bChartRows = rawLog.map(e => [
+      e.time,
+      parseFloat(e.color1?.b ?? 0),
+      parseFloat(e.color2?.b ?? 0),
+      e.slope ? parseFloat(e.slope.b1) : "",
+      e.slope ? parseFloat(e.slope.b2) : ""
+    ]);
+    const wsChart1 = XLSX.utils.aoa_to_sheet([bChartHeader, ...bChartRows]);
+
+    // 在工作表中嵌入折線圖定義（B值隨時間變化）
+    wsChart1["!charts"] = [{
+      name: "B值隨時間變化",
+      type: "line",
+      series: [
+        { name: "空白組B值", xRef: { sheet: "圖表資料_B值變化", col: 0 }, yRef: { sheet: "圖表資料_B值變化", col: 1 } },
+        { name: "樣品組B值", xRef: { sheet: "圖表資料_B值變化", col: 0 }, yRef: { sheet: "圖表資料_B值變化", col: 2 } }
+      ],
+      title: "空白組 vs 樣品組 B值隨時間變化",
+      xAxis: "時間(秒)",
+      yAxis: "B值"
+    }];
+    XLSX.utils.book_append_sheet(wb, wsChart1, "圖表資料_B值變化");
+
+
+    // ── 工作表5：圖表資料_版本比較（長條圖用）──────────────
+    const versions = ["版本B（主要）", "版本A", "版本C", "原始版本"];
+    const rates    = [rateB, rateA, rateC, rateOrig].map(r => parseRate(r) ?? 0);
+    const barHeader = ["版本", "抑制率(%)", "判定", "合格線(35%)", "警戒線(45%)"];
+    const barRows   = versions.map((v, i) => [
+      v, rates[i], getJudgment(rates[i]).label, 35, 45
+    ]);
+    const wsChart2 = XLSX.utils.aoa_to_sheet([barHeader, ...barRows]);
+    XLSX.utils.book_append_sheet(wb, wsChart2, "圖表資料_版本比較");
+
+
+    // ── 輸出檔案 ──────────────────────────────────────────
     const ts = new Date().toISOString().slice(0,16).replace("T","_").replace(":","");
     XLSX.writeFile(wb, `農藥檢測_${ts}.xlsx`);
   }
