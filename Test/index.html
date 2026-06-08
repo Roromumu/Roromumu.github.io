@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>實驗數據收集</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: sans-serif;
+      background: #f0f4f8;
+      padding: 20px;
+      max-width: 480px;
+      margin: auto;
+    }
+    h1 { text-align: center; color: #2d6a4f; margin-bottom: 20px; font-size: 1.4rem; }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      margin-bottom: 16px;
+    }
+    label { display: block; font-size: 0.85rem; color: #555; margin-bottom: 6px; }
+    input, select, textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      font-size: 1rem;
+      margin-bottom: 14px;
+    }
+    button {
+      width: 100%;
+      padding: 14px;
+      background: #2d6a4f;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+    button:active { background: #1b4332; }
+    #status {
+      text-align: center;
+      margin-top: 12px;
+      font-size: 0.95rem;
+      min-height: 24px;
+    }
+    .success { color: #2d6a4f; }
+    .error { color: #e63946; }
+    .log-title { font-weight: bold; margin-bottom: 8px; color: #333; }
+    .log-item {
+      font-size: 0.82rem;
+      color: #555;
+      padding: 6px 0;
+      border-bottom: 1px solid #eee;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔬 實驗數據記錄</h1>
+
+  <div class="card">
+    <label>實驗組別 / 條件</label>
+    <select id="group">
+      <option value="對照組">對照組</option>
+      <option value="實驗組A">實驗組 A</option>
+      <option value="實驗組B">實驗組 B</option>
+      <option value="實驗組C">實驗組 C</option>
+    </select>
+
+    <label>測量數值</label>
+    <input type="number" id="value" placeholder="例如：36.5" step="any">
+
+    <label>單位</label>
+    <input type="text" id="unit" placeholder="例如：°C、mg、cm">
+
+    <label>備註（選填）</label>
+    <textarea id="note" rows="2" placeholder="觀察紀錄..."></textarea>
+
+    <button onclick="sendData()">📤 送出數據</button>
+    <div id="status"></div>
+  </div>
+
+  <div class="card">
+    <div class="log-title">📋 本次記錄（最近 5 筆）</div>
+    <div id="log">尚無記錄</div>
+  </div>
+
+  <script>
+    // ⚠️ 請換成你的 Apps Script 部署網址
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzgtiNrxxQdBF2A8rbL7FamIB7vClPZUHmQzrP_VgNGW0woE8av7otXvJXoJZHXMPkC2w/exec";
+
+    const localLog = [];
+
+    async function sendData() {
+      const group = document.getElementById("group").value;
+      const value = document.getElementById("value").value;
+      const unit  = document.getElementById("unit").value;
+      const note  = document.getElementById("note").value;
+      const status = document.getElementById("status");
+
+      if (!value || !unit) {
+        status.textContent = "⚠️ 請填寫數值和單位";
+        status.className = "error";
+        return;
+      }
+
+      status.textContent = "傳送中...";
+      status.className = "";
+
+      try {
+        await fetch(SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",   // Apps Script 需要此設定
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ group, value: Number(value), unit, note })
+        });
+
+        // 本地記錄
+        const time = new Date().toLocaleTimeString("zh-TW");
+        localLog.unshift(`${time}｜${group}｜${value} ${unit}`);
+        if (localLog.length > 5) localLog.pop();
+        document.getElementById("log").innerHTML =
+          localLog.map(l => `<div class="log-item">${l}</div>`).join("");
+
+        status.textContent = "✅ 已成功記錄！";
+        status.className = "success";
+        document.getElementById("value").value = "";
+        document.getElementById("note").value = "";
+
+      } catch (err) {
+        status.textContent = "❌ 傳送失敗，請確認網路";
+        status.className = "error";
+      }
+    }
+  </script>
+</body>
+</html>
