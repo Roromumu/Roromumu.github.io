@@ -2,13 +2,22 @@ const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbw4nSY7VvJJk1b
 
 async function uploadToGoogleSheets(data) {
     try {
-        await fetch(GOOGLE_SHEET_URL, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data)
-        });
-        // 畫面提示
+        // 把資料轉成 JSON 字串，用 form 方式送出（Safari 相容）
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = GOOGLE_SHEET_URL + "?t=" + Date.now();
+        form.target = 'hidden_iframe'; // 送到隱藏 iframe，不跳轉頁面
+
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'payload';
+        input.value = JSON.stringify(data);
+        form.appendChild(input);
+
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+
         alert("✅ 資料已送出！工作表：" + data.sheetName);
     } catch (err) {
         alert("❌ 上傳失敗：" + err.message);
