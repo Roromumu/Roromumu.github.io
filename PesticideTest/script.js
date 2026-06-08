@@ -1,26 +1,16 @@
-const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbxa1smyvg3eH798v6QGW2ERAyCMNTbzFblX696lGDVrshp8p4cpMtfGI2XrDcxhnRhI/exec";
+const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbxPIuctYWvkj_5Bl2IsAjtQMzmlliESWVmaqlnzYXdkC2PQefYDyMS6xN45OlEbn4Tl9A/exec";
 
 async function uploadToGoogleSheets(data) {
+    const url = GOOGLE_SHEET_URL + "?t=" + Date.now();
     try {
-        // 把資料轉成 JSON 字串，用 form 方式送出（Safari 相容）
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = GOOGLE_SHEET_URL + "?t=" + Date.now();
-        form.target = 'hidden_iframe'; // 送到隱藏 iframe，不跳轉頁面
-
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'payload';
-        input.value = JSON.stringify(data);
-        form.appendChild(input);
-
-        document.body.appendChild(form);
-        form.submit();
-        document.body.removeChild(form);
-
-        alert("✅ 資料已送出！工作表：" + data.sheetName);
+        await fetch(url, {
+            method: "POST",
+            mode: "no-cors",
+            body: JSON.stringify(data)
+            // 不加 Content-Type
+        });
     } catch (err) {
-        alert("❌ 上傳失敗：" + err.message);
+        console.error("上傳失敗:", err);
     }
 }
 
