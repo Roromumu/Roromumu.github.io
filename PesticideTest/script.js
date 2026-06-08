@@ -23,6 +23,7 @@ function getErrorCode(percentStr) {
     if (num < 0)     return "WARN-01: 輕微負值，系統修正為 0%";
     return "正常";
 }
+
 const video = document.getElementById('camera');
 const analyzeBtn = document.getElementById('analyzeBtn');
 const stopBtn = document.getElementById('stopBtn');
@@ -206,10 +207,8 @@ analyzeBtn.addEventListener('click', async function () {
     stopBtn.disabled = false;
     analyzeBtn.disabled = true;
 
-    analyzingOverlay.style.display = 'flex'; //  顯示提示條
-    //await toggleTorch(true);
+    analyzingOverlay.style.display = 'flex';
 
-    // 立刻顯示
     const color1 = getAverageColor(redBox1);
     const color2 = getAverageColor(redBox2);
 
@@ -258,7 +257,7 @@ analyzeBtn.addEventListener('click', async function () {
             analyzeBtn.disabled = false;
             stopBtn.disabled = true;
             toggleTorch(false);
-            analyzingOverlay.style.display = 'none'; // 分析結束隱藏
+            analyzingOverlay.style.display = 'none';
             showQuartiles();
         }
     }, 2000);
@@ -281,26 +280,24 @@ function toggleTorch(on) {
 startCamera();
 makeDraggable(redBox1);
 makeDraggable(redBox2);
+
 //20250514
 document.getElementById('startBtn').addEventListener('click', async () => {
     await startCamera();
-     // 更新紅框位置
     video.onloadeddata = () => {
         updateRedBoxPositions();
 
-        // 抓取紅框 RGB 值
         const color1 = getAverageColor(redBox1);
         const color2 = getAverageColor(redBox2);
 
-        // 顯示在 result 區塊
         result.innerHTML = `
             空白組 RGB: (${color1.r.toFixed(3)}, ${color1.g.toFixed(3)}, ${color1.b.toFixed(3)})<br>
             樣品組 RGB: (${color2.r.toFixed(3)}, ${color2.g.toFixed(3)}, ${color2.b.toFixed(3)})<br>
         `;
     };
-    });    
+});
 //20250514
-   
+
 function calculatePercentageReduction(b1Stats, b2Stats) {
     function safePercent(qB1, qB2) {
         const n1 = parseFloat(qB1);
@@ -344,42 +341,36 @@ function movingAverage(values, windowSize = 5) {
     return result;
 }
 
-function showQuartiles() {
-    // 過濾有效資料
+// ── 計算結果並上傳 ──────────────────────────────────────
+async function showQuartiles() {
     const validData = logRGBValues.filter(entry =>
         entry.slope &&
         !isNaN(parseFloat(entry.slope.b1)) &&
         !isNaN(parseFloat(entry.slope.b2))
     );
 
-    // 不取變化幅度（無論上升或下降）
-    const rawB1 = validData.map(entry => (parseFloat(entry.slope.b1)));
-    const rawB2 = validData.map(entry => (parseFloat(entry.slope.b2)));
+    const rawB1 = validData.map(entry => parseFloat(entry.slope.b1));
+    const rawB2 = validData.map(entry => parseFloat(entry.slope.b2));
 
-    // 使用滑動平均（每5筆）
     const b1Smoothed = movingAverage(rawB1, 5);
     const b2Smoothed = movingAverage(rawB2, 5);
 
-    // 四分位數統計
     const b1Stats = calculateQuartiles(b1Smoothed);
     const b2Stats = calculateQuartiles(b2Smoothed);
 
-    // 計算抑制率
     const percentReduction = calculatePercentageReduction(b1Stats, b2Stats);
     const percentResult = percentReduction.average;
 
-    // 儲存並跳轉
-    // 原本是這兩行：
-    // localStorage.setItem("rate", percentResult);
-    // location.href = "Results.html";
-
-    // 換成：
     const errorCode = getErrorCode(percentResult);
     const now = new Date();
     const pad = n => String(n).padStart(2, '0');
     const sheetName = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}:${pad(now.getMinutes())}`;
 
-    uploadToGoogleSheets({
+    // 先儲存結果
+    localStorage.setItem("rate", percentResult);
+
+    // 等上傳完成後再跳轉
+    await uploadToGoogleSheets({
         sheetName,
         summary: {
             time:           now.toLocaleString("zh-TW"),
@@ -401,6 +392,5 @@ function showQuartiles() {
         ])
     });
 
-    localStorage.setItem("rate", percentResult);
     location.href = "Results.html";
 }
