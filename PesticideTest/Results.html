@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>檢測結算畫面</title>
+  <link rel="stylesheet" href="ResultsUI.css">
+</head>
+<body>
+  <div class="container">
+
+    <!-- 圓形動畫百分比 -->
+    <div class="box">
+      <div class="title">蔬果汁抑制率</div>
+      <div class="circle-wrapper">
+        <svg>
+          <circle class="bg" cx="75" cy="75" r="70" />
+          <circle class="fg" cx="75" cy="75" r="70" id="fgCircle" />
+        </svg>
+        <div class="percent-text" id="percentText">0%</div>
+      </div>
+    </div>
+
+    <!-- 檢測報告區塊 -->
+    <div class="result-box">
+      <h2>檢測報告</h2>
+      <p>農試所判定標準</p>
+      <div class="status" id="statusText">--</div>
+      <div class="buttons">
+        <button onclick="location.href='intro.html'">返回主頁</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="ResultsSW.js"></script>
+</body>
+</html>

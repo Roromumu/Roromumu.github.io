@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>攝像頭顏色分析</title>
+<link href="styles.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+</head>
+<body>
+<div class="TopImage">
+<img alt="Top Image" src="images/TopImage.png" style="width: 100%; height: 100px; object-fit: contain; display: block;"/>
+</div>
+<div class="header">
+<h2>農藥抑制率分析</h2>
+<button id="startBtn">光源訊號確認</button>
+</div>
+<div class="container">
+<video autoplay="" id="camera" muted="" playsinline=""></video>
+<!-- 紅框部分 -->
+<div class="redBox" id="redBox1">
+<span class="boxLabel">空白組</span>
+</div>
+<div class="redBox" id="redBox2">
+<span class="boxLabel">樣品組</span>
+</div>
+</div>
+<!-- 按鈕放 container 外部 -->
+<div class="button-group">
+<button id="backBtn">返回上一頁</button>
+<button id="showStepsBtn">查看步驟</button>
+<button id="analyzeBtn">開始分析</button>
+<button id="stopBtn" style="display:none;">停止分析</button>
+</div>
+<!-- 分析中提示條 -->
+<div class="inline-hint vertical" id="analyzingOverlay" style="display: none;">
+<div class="spinner-inline"></div>
+<span style="margin-left: 10px;">正在分析中…</span>
+</div>
+<p id="result"></p>
+<script src="script.js"></script>
+<script>
+document.getElementById('showStepsBtn').addEventListener('click', () => {
+    document.getElementById('stepsModal').style.display = 'block';
+});
+
+</script>
+<div class="modal" id="stepsModal">
+<div class="modal-content">
+<span class="close-button" id="closeStepsBtn">×</span>
+<div class="modal-steps">
+<h3>實驗步驟</h3>
+<ul style="list-style: none; padding-left: 0;">
+<li style="background: #eefbe4; padding: 12px; border-radius: 8px; margin-bottom: 10px;">
+<div class="step-title">樣品處理</div>
+<img src="images/sample.png" style="width: 90%; height: auto;"/>
+<ol>
+<li style="background: #eefbe4; padding: 12px; border-radius: 8px; margin-bottom: 10px;">將樣品瓶中加入約1 c.c.的75%酒精</li>
+<li style="background: #eefbe4; padding: 12px; border-radius: 8px; margin-bottom: 10px;">用吸管中空部分在蔬果上押出約5片圓片,作為蔬果樣品</li>
+<li style="background: #eefbe4; padding: 12px; border-radius: 8px; margin-bottom: 10px;">將圓片的蔬果樣品放入樣品瓶中</li>
+<li style="background: #eefbe4; padding: 12px; border-radius: 8px; margin-bottom: 10px;">將含有蔬果的樣品瓶搖晃數秒後靜置 3 分鐘，作為蔬果液</li>
+</ol>
+</li>
+<li style="background: #eefbe4; padding: 12px; border-radius: 8px; margin-bottom: 10px;">
+<div class="step-title">光源調整</div>
+<img src="images/lights.png" style="width: 100%; height: auto;"/>
+<ol>
+<li style="background: #eefbe4; padding: 12px; border-radius: 8px; margin-bottom: 10px;">取出兩根檢測管放入白色檢測座中</li>
+<li style="background: #eefbe4; padding: 12px; border-radius: 8px; margin-bottom: 10px;">樣品組的檢測管加入3-4滴做好的蔬果液(50% 農藥測試管改滴75%酒精)</li>
+<li style="background: #eefbe4; padding: 12px; border-radius: 8px; margin-bottom: 10px;">將手機架好並移動紅框使其對準白色檢測座中的兩根檢測管</li>
+<li style="background: #eefbe4; padding: 12px; border-radius: 8px; margin-bottom: 10px;">樣品組紅框對準滴入蔬果液的檢測管；空白組對準未滴入任何樣品的檢測管</li>
+<li style="background: #eefbe4; padding: 12px; border-radius: 8px; margin-bottom: 10px;">按下<b>光源訊號確認</b>查看空白組與樣品組的第三個數值(B)，確認其值大於150且相差不大於15</li>
+</ol>
+</li>
+<li style="background: #eefbe4; padding: 12px; border-radius: 8px; margin-bottom: 10px;">
+<div class="step-title">農藥測試</div>
+<img src="images/pesticide.png" style="width: 90%; height: auto;"/>
+<ol>
+<li style="background: #eefbe4; padding: 12px; border-radius: 8px; margin-bottom: 10px;">在酵素瓶中加水至畫線處(約3 c.c.)</li>
+<li style="background: #eefbe4; padding: 12px; border-radius: 8px; margin-bottom: 10px;">取出一根酵素棒，有凹槽的朝下，放進酵素瓶裡搖晃混合成酵素液</li>
+<li style="background: #eefbe4; padding: 12px; border-radius: 8px; margin-bottom: 10px;">將兩個檢測管中分別加入一半酵素液(加入時不要再移動檢測座和手機)</li>
+<li style="background: #eefbe4; padding: 12px; border-radius: 8px; margin-bottom: 10px;">按下<b>開始分析</b>並等待結果</li>
+</ol>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<script>
+if (stopBtn) stopBtn.disabled = true;
+    
+document.getElementById('backBtn').addEventListener('click', () => {
+    if (document.referrer && document.referrer !== location.href) 
+    {
+        window.history.back();
+    } 
+    else
+    {
+        window.location.href = 'intro.html'; 
+    }
+});
+
+document.getElementById('showStepsBtn').addEventListener('click', () => {
+    document.getElementById('stepsModal').style.display = 'block';
+});
+document.getElementById('closeStepsBtn').addEventListener('click', () => {
+    document.getElementById('stepsModal').style.display = 'none';
+});
+window.addEventListener('click', (event) => {
+    const modal = document.getElementById('stepsModal');
+    if (event.target === modal) {
+        modal.style.display = 'none';
+    }
+});
+</script>
+<div class="version-display" id="version">版本號: v1.514.1350-sw</div>
+</body>
+</html>
