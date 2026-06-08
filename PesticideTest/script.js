@@ -1,4 +1,4 @@
-const GOOGLE_SHEET_URL = "貼上你的_Apps_Script_部署網址";
+const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbyNFJwymk6_6c13sb0EATsOHacGpguJ7pG2FftihRmYQRJWXVKJpb4vs4uoNSprDZRAhQ/exec";
 
 async function uploadToGoogleSheets(data) {
     try {
