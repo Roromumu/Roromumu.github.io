@@ -1,3 +1,27 @@
+const GOOGLE_SHEET_URL = "貼上你的_Apps_Script_部署網址";
+
+async function uploadToGoogleSheets(data) {
+    try {
+        await fetch(GOOGLE_SHEET_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        });
+    } catch (err) {
+        console.error("❌ 上傳失敗:", err);
+    }
+}
+
+function getErrorCode(percentStr) {
+    if (percentStr === "N/A") return "ERR-04: 無法計算抑制率（資料不足或分母為零）";
+    const num = parseFloat(percentStr);
+    if (isNaN(num))  return "ERR-04: 無法計算抑制率（資料不足或分母為零）";
+    if (num > 100)   return "ERR-02: 抑制率異常偏高（>100%）";
+    if (num < -10)   return "ERR-01: 抑制率異常偏低（<-10%）";
+    if (num < 0)     return "WARN-01: 輕微負值，系統修正為 0%";
+    return "正常";
+}
 const video = document.getElementById('camera');
 const analyzeBtn = document.getElementById('analyzeBtn');
 const stopBtn = document.getElementById('stopBtn');
@@ -344,6 +368,38 @@ function showQuartiles() {
     const percentResult = percentReduction.average;
 
     // 儲存並跳轉
+    // 原本是這兩行：
+    // localStorage.setItem("rate", percentResult);
+    // location.href = "Results.html";
+
+    // 換成：
+    const errorCode = getErrorCode(percentResult);
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const sheetName = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+    uploadToGoogleSheets({
+        sheetName,
+        summary: {
+            time:           now.toLocaleString("zh-TW"),
+            inhibitionRate: percentResult,
+            errorCode:      errorCode,
+            b1Q1:           b1Stats.q1,
+            b1Q2:           b1Stats.q2,
+            b2Q1:           b2Stats.q1,
+            b2Q2:           b2Stats.q2,
+            q1Percent:      percentReduction.q1Percent,
+            q2Percent:      percentReduction.q2Percent,
+        },
+        rawData: logRGBValues.map(entry => [
+            entry.time,
+            entry.color1.r, entry.color1.g, entry.color1.b,
+            entry.color2.r, entry.color2.g, entry.color2.b,
+            entry.slope ? entry.slope.b1 : "",
+            entry.slope ? entry.slope.b2 : ""
+        ])
+    });
+
     localStorage.setItem("rate", percentResult);
     location.href = "Results.html";
 }
