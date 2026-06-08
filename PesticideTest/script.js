@@ -1,4 +1,4 @@
-const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbyASL5VtYkPCRyEsh8nvP2XUQXqJ22GSrfp-Uv3VTh_GL3ZR9NrEB_lPPhA0UzWaVshDw/exec";
+const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbx7WcR1YnCpTE44AzlY90qFmkjdDctJYkk0QKtU5o5W1YdXymlEbLkCCppMTn_9URmdLw/exec";
 
 async function uploadToGoogleSheets(data) {
     try {
