@@ -1,4 +1,4 @@
-const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbx7WcR1YnCpTE44AzlY90qFmkjdDctJYkk0QKtU5o5W1YdXymlEbLkCCppMTn_9URmdLw/exec";
+const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbw4nSY7VvJJk1bQ79HW9ats5jXXyfpm5ptxeB38-QdqE7Ijcj08hWnA9Or5IGvSq5kVsA/exec";
 
 async function uploadToGoogleSheets(data) {
     try {
@@ -8,8 +8,10 @@ async function uploadToGoogleSheets(data) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data)
         });
+        // 畫面提示
+        alert("✅ 資料已送出！工作表：" + data.sheetName);
     } catch (err) {
-        console.error("❌ 上傳失敗:", err);
+        alert("❌ 上傳失敗：" + err.message);
     }
 }
 
