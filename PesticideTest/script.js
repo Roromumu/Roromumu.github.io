@@ -26,40 +26,45 @@ function getErrorCode(percentStr) {
 
 function getDeviceInfo() {
     const ua = navigator.userAgent;
-    
+
     // iOS 裝置
     if (/iPhone/.test(ua)) {
-        const match = ua.match(/OS (\d+_\d+)/);
-        const ver = match ? match[1].replace('_', '.') : '';
+        const match = ua.match(/OS (\d+[_\d]*)/);
+        const ver = match ? match[1].replace(/_/g, '.') : '';
         return `iPhone iOS ${ver}`;
     }
     if (/iPad/.test(ua)) {
-        const match = ua.match(/OS (\d+_\d+)/);
-        const ver = match ? match[1].replace('_', '.') : '';
+        const match = ua.match(/OS (\d+[_\d]*)/);
+        const ver = match ? match[1].replace(/_/g, '.') : '';
         return `iPad iOS ${ver}`;
     }
-    
+
     // Android 裝置
     if (/Android/.test(ua)) {
-    const verMatch = ua.match(/Android ([\d.]+)/);
-    const ver = verMatch ? verMatch[1] : '';
-    
-    // 嘗試多種格式抓型號
-    let model = 'Android';
-    const m1 = ua.match(/;\s*([^;)]+)\sBuild\//);       // 標準格式
-    const m2 = ua.match(/;\s*([^;)]+)\)\s*AppleWebKit/); // 部分機型
-    if (m1) model = m1[1].trim();
-    else if (m2) model = m2[1].trim();
-    
-    return `${model} Android ${ver}`;
+        const verMatch = ua.match(/Android ([\d.]+)/);
+        const ver = verMatch ? verMatch[1] : '';
+
+        // 嘗試多種格式抓型號
+        let model = '';
+        const m1 = ua.match(/;\s*([^;)]+)\s+Build\//);   // 標準: ; Samsung SM-G991B Build/
+        const m2 = ua.match(/;\s*([^;)]+)\)\s*Mobile/);  // 部分機型: ; Pixel 6) Mobile
+        const m3 = ua.match(/;\s*([^;)]+)\)\s*AppleWebKit/); // 其他: ; Xiaomi) AppleWebKit
+
+        if (m1) model = m1[1].trim();
+        else if (m2) model = m2[1].trim();
+        else if (m3) model = m3[1].trim();
+        else model = 'Android裝置';
+
+        return `${model} Android ${ver}`;
     }
-    
+
     // 電腦
     if (/Windows/.test(ua)) return 'Windows PC';
     if (/Macintosh/.test(ua)) return 'Mac';
     if (/Linux/.test(ua)) return 'Linux';
-    
-    return '未知裝置';
+
+    // 抓不到就回傳完整 ua 前60字
+    return ua.substring(0, 60);
 }
 
 const video = document.getElementById('camera');
