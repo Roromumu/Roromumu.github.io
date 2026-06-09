@@ -41,12 +41,17 @@ function getDeviceInfo() {
     
     // Android 裝置
     if (/Android/.test(ua)) {
-        const verMatch = ua.match(/Android ([\d.]+)/);
-        const ver = verMatch ? verMatch[1] : '';
-        // 嘗試抓型號
-        const modelMatch = ua.match(/;\s([^;)]+)\sBuild\//);
-        const model = modelMatch ? modelMatch[1].trim() : 'Android';
-        return `${model} Android ${ver}`;
+    const verMatch = ua.match(/Android ([\d.]+)/);
+    const ver = verMatch ? verMatch[1] : '';
+    
+    // 嘗試多種格式抓型號
+    let model = 'Android';
+    const m1 = ua.match(/;\s*([^;)]+)\sBuild\//);       // 標準格式
+    const m2 = ua.match(/;\s*([^;)]+)\)\s*AppleWebKit/); // 部分機型
+    if (m1) model = m1[1].trim();
+    else if (m2) model = m2[1].trim();
+    
+    return `${model} Android ${ver}`;
     }
     
     // 電腦
