@@ -58,6 +58,23 @@ else
     circle.style.stroke = color;
     status.textContent = label;
     status.style.color = color;
+    // 顯示錯誤碼
+    const errorCode = localStorage.getItem("errorCode");
+    if (errorCode && errorCode !== "正常") {
+        const errorDiv = document.createElement('div');
+        errorDiv.textContent = errorCode;
+        errorDiv.style.cssText = `
+            font-size: 14px;
+            color: #e63946;
+            font-weight: bold;
+            margin-top: 8px;
+            padding: 6px 12px;
+            background: #ffe0e0;
+            border-radius: 8px;
+        `;
+        status.parentNode.insertBefore(errorDiv, status.nextSibling);
+    }
+    localStorage.removeItem("errorCode"); // 顯示完清除
 
     let current = 0;
     const duration = 1000;
