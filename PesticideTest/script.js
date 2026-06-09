@@ -14,16 +14,6 @@ async function uploadToGoogleSheets(data) {
     }
 }
 
-function getErrorCode(percentStr) {
-    if (percentStr === "N/A") return "ERR-04: 無法計算抑制率（資料不足或分母為零）";
-    const num = parseFloat(percentStr);
-    if (isNaN(num))  return "ERR-04: 無法計算抑制率（資料不足或分母為零）";
-    if (num > 100)   return "ERR-02: 抑制率異常偏高（>100%）";
-    if (num < -10)   return "ERR-01: 抑制率異常偏低（<-10%）";
-    if (num < 0)     return "WARN-01: 輕微負值，系統修正為 0%";
-    return "正常";
-}
-
 function getDeviceInfo() {
     const ua = navigator.userAgent;
 
@@ -337,18 +327,32 @@ function calculatePercentageReduction(b1Stats, b2Stats) {
     function safePercent(qB1, qB2) {
         const n1 = parseFloat(qB1);
         const n2 = parseFloat(qB2);
-        if (n1 === 0) return null;
-        return (1 - (n2 / n1)) * 100;
+        if (n1 === 0) return { value: null, warning: null };
+
+        // 條件1：n1 或 n2 小於 0
+        if (n1 < 0 || n2 < 0) return { value: null, warning: "ERROR:酵素活性不足" };
+
+        // 條件2：n2 > n1，交換計算
+        if (n2 > n1) return { value: (1 - (n1 / n2)) * 100, warning: "警告:A,B位置可能錯置" };
+
+        return { value: (1 - (n2 / n1)) * 100, warning: null };
     }
 
-    const q1Raw = safePercent(b1Stats.q1, b2Stats.q1);
-    const q2Raw = safePercent(b1Stats.q2, b2Stats.q2);
-    const avg = (q1Raw != null && q2Raw != null) ? ((q1Raw + q2Raw) / 2).toFixed(2) + "%" : "N/A";
+    const q1Result = safePercent(b1Stats.q1, b2Stats.q1);
+    const q2Result = safePercent(b1Stats.q2, b2Stats.q2);
+
+    // 警告優先取 Q2 的
+    const warning = q2Result.warning || q1Result.warning || null;
+
+    const avg = (q1Result.value != null && q2Result.value != null)
+        ? ((q1Result.value + q2Result.value) / 2).toFixed(2) + "%"
+        : "N/A";
 
     return {
-        q1Percent: q1Raw != null ? q1Raw.toFixed(2) + "%" : "N/A",
-        q2Percent: q2Raw != null ? q2Raw.toFixed(2) + "%" : "N/A",
-        average: avg
+        q1Percent: q1Result.value != null ? q1Result.value.toFixed(2) + "%" : "N/A",
+        q2Percent: q2Result.value != null ? q2Result.value.toFixed(2) + "%" : "N/A",
+        average:   avg,
+        warning:   warning
     };
 }
 
@@ -396,13 +400,14 @@ async function showQuartiles() {
     const percentReduction = calculatePercentageReduction(b1Stats, b2Stats);
     const percentResult = percentReduction.average;
 
-    const errorCode = getErrorCode(percentResult);
+    const errorCode = percentReduction.warning || "正常";
     const now = new Date();
     const pad = n => String(n).padStart(2, '0');
     const sheetName = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}:${pad(now.getMinutes())}`;
 
     // 先儲存結果
     localStorage.setItem("rate", percentReduction.q2Percent);
+    localStorage.setItem("errorCode", errorCode);
 
     // 等上傳完成後再跳轉
     await uploadToGoogleSheets({
