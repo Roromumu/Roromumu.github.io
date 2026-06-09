@@ -44,18 +44,11 @@ function getDeviceInfo() {
         const verMatch = ua.match(/Android ([\d.]+)/);
         const ver = verMatch ? verMatch[1] : '';
 
-        // 嘗試多種格式抓型號
-        let model = '';
-        const m1 = ua.match(/;\s*([^;)]+)\s+Build\//);   // 標準: ; Samsung SM-G991B Build/
-        const m2 = ua.match(/;\s*([^;)]+)\)\s*Mobile/);  // 部分機型: ; Pixel 6) Mobile
-        const m3 = ua.match(/;\s*([^;)]+)\)\s*AppleWebKit/); // 其他: ; Xiaomi) AppleWebKit
+        // 抓品牌名稱
+        const brandMatch = ua.match(/\b(Samsung|Xiaomi|OPPO|vivo|Huawei|Pixel|OnePlus|ASUS|Sony|LG|Motorola|Realme|Nokia|HTC)\b/i);
+        const brand = brandMatch ? brandMatch[1] : 'Android裝置';
 
-        if (m1) model = m1[1].trim();
-        else if (m2) model = m2[1].trim();
-        else if (m3) model = m3[1].trim();
-        else model = 'Android裝置';
-
-        return `${model} Android ${ver}`;
+        return `${brand} Android ${ver}`;
     }
 
     // 電腦
@@ -63,7 +56,6 @@ function getDeviceInfo() {
     if (/Macintosh/.test(ua)) return 'Mac';
     if (/Linux/.test(ua)) return 'Linux';
 
-    // 抓不到就回傳完整 ua 前60字
     return ua.substring(0, 60);
 }
 
