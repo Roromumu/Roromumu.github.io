@@ -373,6 +373,7 @@ async function showQuartiles() {
     await uploadToGoogleSheets({
         sheetName,
         summary: {
+            nickname:       localStorage.getItem('nickname') || '未填寫',  // ← 加這行
             time:           now.toLocaleString("zh-TW"),
             inhibitionRate: percentResult,
             errorCode:      errorCode,
