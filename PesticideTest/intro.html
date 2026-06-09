@@ -186,7 +186,22 @@
     </div>
 
 
-
+<div style="margin: 20px auto; max-width: 300px;">
+  <input type="text" id="nicknameInput" placeholder="請輸入暱稱" 
+    style="width: 100%; padding: 12px; font-size: 16px; border: 2px solid #6ab04c; 
+    border-radius: 8px; text-align: center; box-sizing: border-box;">
+</div>
+<script>
+  document.querySelector('.start-btn').addEventListener('click', function(e) {
+    const nickname = document.getElementById('nicknameInput').value.trim();
+    if (!nickname) {
+      alert('請先輸入暱稱！');
+      e.preventDefault();
+      return;
+    }
+    localStorage.setItem('nickname', nickname);
+  });
+</script>
 
 
 <a class="start-btn" href="index.html">開始分析</a>
