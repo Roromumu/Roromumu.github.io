@@ -24,6 +24,39 @@ function getErrorCode(percentStr) {
     return "正常";
 }
 
+function getDeviceInfo() {
+    const ua = navigator.userAgent;
+    
+    // iOS 裝置
+    if (/iPhone/.test(ua)) {
+        const match = ua.match(/OS (\d+_\d+)/);
+        const ver = match ? match[1].replace('_', '.') : '';
+        return `iPhone iOS ${ver}`;
+    }
+    if (/iPad/.test(ua)) {
+        const match = ua.match(/OS (\d+_\d+)/);
+        const ver = match ? match[1].replace('_', '.') : '';
+        return `iPad iOS ${ver}`;
+    }
+    
+    // Android 裝置
+    if (/Android/.test(ua)) {
+        const verMatch = ua.match(/Android ([\d.]+)/);
+        const ver = verMatch ? verMatch[1] : '';
+        // 嘗試抓型號
+        const modelMatch = ua.match(/;\s([^;)]+)\sBuild\//);
+        const model = modelMatch ? modelMatch[1].trim() : 'Android';
+        return `${model} Android ${ver}`;
+    }
+    
+    // 電腦
+    if (/Windows/.test(ua)) return 'Windows PC';
+    if (/Macintosh/.test(ua)) return 'Mac';
+    if (/Linux/.test(ua)) return 'Linux';
+    
+    return '未知裝置';
+}
+
 const video = document.getElementById('camera');
 const analyzeBtn = document.getElementById('analyzeBtn');
 const stopBtn = document.getElementById('stopBtn');
@@ -374,6 +407,7 @@ async function showQuartiles() {
         sheetName,
         summary: {
             nickname:       localStorage.getItem('nickname') || '未填寫',  // ← 加這行
+            device: getDeviceInfo(),
             time:           now.toLocaleString("zh-TW"),
             inhibitionRate: percentResult,
             errorCode:      errorCode,
