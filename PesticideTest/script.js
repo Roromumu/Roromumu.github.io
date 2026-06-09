@@ -402,7 +402,7 @@ async function showQuartiles() {
     const sheetName = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}:${pad(now.getMinutes())}`;
 
     // 先儲存結果
-    localStorage.setItem("rate", percentResult);
+    localStorage.setItem("rate", percentReduction.q2Percent);
 
     // 等上傳完成後再跳轉
     await uploadToGoogleSheets({
