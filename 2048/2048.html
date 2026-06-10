@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>終極完美對齊版 2048</title>
+    <style>
+        :root {
+            --bg-color: #faf8ef;
+            --grid-bg: #bbada0;
+            --cell-bg: rgba(238, 228, 218, 0.35);
+            --text-dark: #776e65;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: "Clear Sans", "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        h1 {
+            font-size: 55px;
+            font-weight: bold;
+            margin: 0;
+            letter-spacing: -1px;
+        }
+
+        .scores-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .score-box {
+            background: #bbada0;
+            padding: 5px 15px;
+            border-radius: 3px;
+            min-width: 65px;
+            text-align: center;
+            color: white;
+        }
+
+        .score-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #eee4da;
+            font-weight: bold;
+        }
+
+        .score-value {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .above-game {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .restart-btn {
+            background: #8f7a66;
+            border-radius: 3px;
+            padding: 10px 20px;
+            color: #f9f6f2;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .restart-btn:hover {
+            background-color: #9f8a76;
+        }
+
+        /* 棋盤主體：前景與背景完全共用同一個 Grid 設定，確保 100% 咬合 */
+        .game-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 100%; 
+            background: var(--grid-bg);
+            border-radius: 6px;
+            box-sizing: border-box;
+            touch-action: none;
+        }
+
+        .grid-container, .tile-container {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 12px;
+            padding: 12px;
+            box-sizing: border-box;
+        }
+
+        .tile-container {
+            background: transparent;
+            pointer-events: none; /* 讓阻擋層不干擾滑動觸控 */
+        }
+
+        .grid-cell {
+            background: var(--cell-bg);
+            border-radius: 4px;
+        }
+
+        /* 方塊本體：完全填滿 Grid 分配給他的格子 */
+        .tile {
+            width: 100%;
+            height: 100%;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            /* 預設為縮放動畫 */
+            animation: appear 0.15s ease-in-out both;
+        }
+
+        /* 當方塊移動時，JavaScript 會動態掛上這個動畫 */
+        .tile-moving {
+            animation: slide 0.1s ease-in-out both;
+        }
+
+        .tile-merged {
+            animation: pop 0.15s ease-in-out both;
+        }
+
+        /* 經典 2048 配色 */
+        .tile-2    { background: #eee4da; color: #776e65; }
+        .tile-4    { background: #ede0c8; color: #776e65; }
+        .tile-8    { background: #f2b179; color: #f9f6f2; }
+        .tile-16   { background: #f59563; color: #f9f6f2; }
+        .tile-32   { background: #f67c5f; color: #f9f6f2; }
+        .tile-64   { background: #f65e3b; color: #f9f6f2; }
+        .tile-128  { background: #edcf72; color: #f9f6f2; font-size: 30px; box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.2); }
+        .tile-256  { background: #edcc61; color: #f9f6f2; font-size: 30px; box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.3); }
+        .tile-512  { background: #edc850; color: #f9f6f2; font-size: 30px; box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.4); }
+        .tile-1024 { background: #edc53f; color: #f9f6f2; font-size: 24px; box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.5); }
+        .tile-2048 { background: #edc22e; color: #f9f6f2; font-size: 24px; box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.6); }
+        .tile-super { background: #3c3a32; color: #f9f6f2; font-size: 20px; }
+
+        /* 原生 CSS 動作特效 */
+        @keyframes appear {
+            0% { opacity: 0; transform: scale(0); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+
+        /* 根據 JS 動態計算的 X 與 Y 物理位移差距，進行平滑移動 */
+        @keyframes slide {
+            0% { transform: translate(var(--from-x), var(--from-y)); }
+            100% { transform: translate(0, 0); }
+        }
+
+        .game-message {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(238, 228, 218, 0.8);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            border-radius: 6px;
+        }
+
+        .game-message p { font-size: 50px; font-weight: bold; margin: 0 0 20px 0; }
+
+        /* 手機板自動縮放 */
+        @media (max-width: 520px) {
+            body { padding: 10px; }
+            h1 { font-size: 40px; }
+            .grid-container, .tile-container { gap: 8px; padding: 8px; }
+            .tile { font-size: 28px; }
+            .tile-128, .tile-256, .tile-512 { font-size: 24px; }
+            .tile-1024, .tile-2048 { font-size: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>2048</h1>
+            <div class="scores-container">
+                <div class="score-box">
+                    <div class="score-title">SCORE</div>
+                    <div id="score" class="score-value">0</div>
+                </div>
+                <div class="score-box">
+                    <div class="score-title">BEST</div>
+                    <div id="best-score" class="score-value">0</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="above-game">
+            <p style="margin:0; font-size:15px;">合併數字，挑戰 <strong>2048</strong>！</p>
+            <button class="restart-btn" id="restart-btn">新遊戲</button>
+        </div>
+
+        <div class="game-container" id="game-container">
+            <div class="game-message" id="game-message">
+                <p id="game-over-text">遊戲結束</p>
+                <button class="restart-btn" id="retry-btn">再試一次</button>
+            </div>
+
+            <div class="grid-container">
+                <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+                <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+                <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+                <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+            </div>
+
+            <div class="tile-container" id="tile-container"></div>
+        </div>
+    </div>
+
+    <script>
+        class Tile {
+            constructor(row, col, value) {
+                this.row = row;
+                this.col = col;
+                this.value = value;
+                this.element = document.createElement('div');
+                this.mergedInto = null;
+                this.createElement();
+            }
+
+            createElement() {
+                this.element.className = `tile tile-${this.value <= 2048 ? this.value : 'super'}`;
+                this.element.textContent = this.value;
+                this.applyGridPosition();
+            }
+
+            // 直接交給瀏覽器原生 CSS Grid 定位，徹底根除「對不准」的問題！
+            applyGridPosition() {
+                this.element.style.gridRowStart = this.row + 1;
+                this.element.style.gridColumnStart = this.col + 1;
+            }
+
+            // 移動時，計算與目標格子的物理距離差，並掛上過渡動畫
+            moveTo(newRow, newCol) {
+                if (this.row === newRow && this.col === newCol) return;
+
+                const container = document.getElementById('tile-container');
+                const cells = container.children;
+                
+                // 動態取得格子當前大小與間距，用以計算精確的位移補償
+                let cellSize = this.element.offsetWidth;
+                let gap = window.innerWidth <= 520 ? 8 : 12;
+
+                let diffX = (this.col - newCol) * (cellSize + gap);
+                let diffY = (this.row - newRow) * (cellSize + gap);
+
+                this.row = newRow;
+                this.col = newCol;
+                this.applyGridPosition();
+
+                // 套用反向位移，讓方塊從「原本的位置」絲滑滑向「新 Grid 位置」
+                this.element.style.setProperty('--from-x', `${diffX}px`);
+                this.element.style.setProperty('--from-y', `${diffY}px`);
+                
+                this.element.classList.remove('tile-moving', 'tile-merged');
+                void this.element.offsetWidth; // 強制重繪觸發動畫
+                this.element.classList.add('tile-moving');
+            }
+
+            updateValue(newValue) {
+                this.value = newValue;
+                setTimeout(() => {
+                    this.element.textContent = newValue;
+                    this.element.className = `tile tile-${newValue <= 2048 ? newValue : 'super'} tile-merged`;
+                }, 100);
+            }
+
+            destroy() {
+                setTimeout(() => {
+                    if (this.element.parentNode) {
+                        this.element.parentNode.removeChild(this.element);
+                    }
+                }, 100);
+            }
+        }
+
+        class Game2048 {
+            constructor() {
+                this.size = 4;
+                this.board = Array(this.size).fill().map(() => Array(this.size).fill(null));
+                this.score = 0;
+                this.bestScore = localStorage.getItem('bestScore_v4') || 0;
+                
+                this.tileContainer = document.getElementById('tile-container');
+                this.scoreDisplay = document.getElementById('score');
+                this.bestDisplay = document.getElementById('best-score');
+                this.gameMessage = document.getElementById('game-message');
+                
+                this.bestDisplay.textContent = this.bestScore;
+
+                this.initInputListeners();
+                this.setupGame();
+            }
+
+            setupGame() {
+                this.tileContainer.innerHTML = '';
+                this.board = Array(this.size).fill().map(() => Array(this.size).fill(null));
+                this.score = 0;
+                this.updateScore(0);
+                this.gameMessage.style.display = 'none';
+                
+                this.addRandomTile();
+                this.addRandomTile();
+            }
+
+            addRandomTile() {
+                let emptyCells = [];
+                for (let r = 0; r < this.size; r++) {
+                    for (let c = 0; c < this.size; c++) {
+                        if (!this.board[r][c]) emptyCells.push({r, c});
+                    }
+                }
+                if (emptyCells.length > 0) {
+                    let {r, c} = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+                    let value = Math.random() < 0.9 ? 2 : 4;
+                    let tile = new Tile(r, c, value);
+                    this.board[r][c] = tile;
+                    this.tileContainer.appendChild(tile.element);
+                }
+            }
+
+            getVector(direction) {
+                const vectors = {
+                    0: { x: -1, y: 0 }, // 上
+                    1: { x: 0,  y: 1 }, // 右
+                    2: { x: 1,  y: 0 }, // 下
+                    3: { x: 0,  y: -1 } // 左
+                };
+                return vectors[direction];
+            }
+
+            buildTraversals(vector) {
+                let x = [0, 1, 2, 3], y = [0, 1, 2, 3];
+                if (vector.x === 1) x.reverse();
+                if (vector.y === 1) y.reverse();
+                return { x, y };
+            }
+
+            move(direction) {
+                if (this.gameMessage.style.display === 'flex') return;
+
+                const vector = this.getVector(direction);
+                const traversals = this.buildTraversals(vector);
+                let moved = false;
+
+                this.board.flat().forEach(tile => { if (tile) tile.mergedInto = null; });
+
+                traversals.x.forEach(r => {
+                    traversals.y.forEach(c => {
+                        let tile = this.board[r][c];
+                        if (tile) {
+                            let positions = this.findFarthestPosition(r, c, vector);
+                            let next = positions.next;
+
+                            if (next && this.withinBounds(next.r, next.c)) {
+                                let targetTile = this.board[next.r][next.c];
+                                if (targetTile && targetTile.value === tile.value && !targetTile.mergedInto) {
+                                    moved = true;
+                                    let newValue = tile.value * 2;
+                                    
+                                    tile.moveTo(next.r, next.c);
+                                    tile.destroy();
+
+                                    targetTile.updateValue(newValue);
+                                    targetTile.mergedInto = true;
+                                    this.updateScore(newValue);
+
+                                    this.board[r][c] = null;
+                                    this.board[next.r][next.c] = targetTile;
+                                    return;
+                                }
+                            }
+
+                            if (positions.farthest.r !== r || positions.farthest.c !== c) {
+                                moved = true;
+                                this.board[r][c] = null;
+                                this.board[positions.farthest.r][positions.farthest.c] = tile;
+                                tile.moveTo(positions.farthest.r, positions.farthest.c);
+                            }
+                        }
+                    });
+                });
+
+                if (moved) {
+                    setTimeout(() => {
+                        this.addRandomTile();
+                        if (this.checkGameOver()) this.endGame();
+                    }, 110);
+                }
+            }
+
+            findFarthestPosition(r, c, vector) {
+                let previous;
+                do {
+                    previous = { r, c };
+                    r += vector.x;
+                    c += vector.y;
+                } while (this.withinBounds(r, c) && !this.board[r][c]);
+
+                return { farthest: previous, next: { r, c } };
+            }
+
+            withinBounds(r, c) { return r >= 0 && r < this.size && c >= 0 && c < this.size; }
+
+            updateScore(points) {
+                this.score += points;
+                this.scoreDisplay.textContent = this.score;
+                if (this.score > this.bestScore) {
+                    this.bestScore = this.score;
+                    this.bestDisplay.textContent = this.bestScore;
+                    localStorage.setItem('bestScore_v4', this.bestScore);
+                }
+            }
+
+            checkGameOver() {
+                if (this.board.flat().includes(null)) return false;
+                for (let r = 0; r < this.size; r++) {
+                    for (let c = 0; c < this.size; c++) {
+                        let tile = this.board[r][c];
+                        if (tile) {
+                            if (r < this.size - 1 && this.board[r+1][c] && this.board[r+1][c].value === tile.value) return false;
+                            if (c < this.size - 1 && this.board[r][c+1] && this.board[r][c+1].value === tile.value) return false;
+                        }
+                    }
+                }
+                return true;
+            }
+
+            endGame() { this.gameMessage.style.display = 'flex'; }
+
+            initInputListeners() {
+                window.addEventListener('keydown', (e) => {
+                    switch (e.key) {
+                        case 'ArrowUp':    this.move(0); e.preventDefault(); break;
+                        case 'ArrowRight': this.move(1); e.preventDefault(); break;
+                        case 'ArrowDown':  this.move(2); e.preventDefault(); break;
+                        case 'ArrowLeft':  this.move(3); e.preventDefault(); break;
+                    }
+                });
+
+                let touchStartX = 0, touchStartY = 0;
+                const container = document.getElementById('game-container');
+
+                container.addEventListener('touchstart', (e) => {
+                    touchStartX = e.touches[0].clientX;
+                    touchStartY = e.touches[0].clientY;
+                }, { passive: true });
+
+                container.addEventListener('touchend', (e) => {
+                    let diffX = e.changedTouches[0].clientX - touchStartX;
+                    let diffY = e.changedTouches[0].clientY - touchStartY;
+                    if (Math.max(Math.abs(diffX), Math.abs(diffY)) > 40) {
+                        if (Math.abs(diffX) > Math.abs(diffY)) {
+                            this.move(diffX > 0 ? 1 : 3);
+                        } else {
+                            this.move(diffY > 0 ? 2 : 0);
+                        }
+                    }
+                }, { passive: true });
+
+                document.getElementById('restart-btn').addEventListener('click', () => this.setupGame());
+                document.getElementById('retry-btn').addEventListener('click', () => this.setupGame());
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => new Game2048());
+    </script>
+</body>
+</html>
