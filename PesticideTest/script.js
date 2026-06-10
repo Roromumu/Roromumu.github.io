@@ -323,20 +323,18 @@ document.getElementById('startBtn').addEventListener('click', async () => {
 });
 //20250514
 
-function calculatePercentageReduction(b1Stats, b2Stats) {
-    function safePercent(qB1, qB2) {
-        const n1 = parseFloat(qB1);
-        const n2 = parseFloat(qB2);
-        if (n1 === 0) return { value: null, warning: null };
+function calculatePercentageReduction(b1Stats, b2Stats, rgbRatio = 1) {
+     function safePercent(qB1, qB2) {
+         const n1 = parseFloat(qB1);
+         const n2 = parseFloat(qB2);
+          if (n1 === 0) return { value: null, warning: null };
 
-        // 條件1：n1 或 n2 小於 0
-        if (n1 < 0 || n2 < 0) return { value: null, warning: "ERROR:酵素活性不足" };
+         if (n1 < 0.05 || n2 < 0) return { value: null, warning: "ERROR:酵素活性不足" };
 
-        // 條件2：n2 > n1，交換計算
-        if (n2 > n1) return { value: (1 - (n1 / n2)) * 100, warning: "警告:A,B位置可能錯置" };
+          if (n2 > n1) return { value: (1 - (n1 / n2) * rgbRatio) * 100, warning: "警告:A,B位置可能錯置" };
 
-        return { value: (1 - (n2 / n1)) * 100, warning: null };
-    }
+          return { value: (1 - (n2 / n1) * rgbRatio) * 100, warning: null };
+      }
 
     const q1Result = safePercent(b1Stats.q1, b2Stats.q1);
     const q2Result = safePercent(b1Stats.q2, b2Stats.q2);
@@ -397,7 +395,29 @@ async function showQuartiles() {
     const b1Stats = calculateQuartiles(b1Smoothed);
     const b2Stats = calculateQuartiles(b2Smoothed);
 
-    const percentReduction = calculatePercentageReduction(b1Stats, b2Stats);
+    // 空白組 R、G、B 原始值的 Q2
+    const blankR = logRGBValues.map(e => parseFloat(e.color1.r)).filter(v => !isNaN(v));
+    const blankG = logRGBValues.map(e => parseFloat(e.color1.g)).filter(v => !isNaN(v));
+    const blankB = logRGBValues.map(e => parseFloat(e.color1.b)).filter(v => !isNaN(v));
+
+    const blankRQ2 = parseFloat(calculateQuartiles(blankR).q2);
+    const blankGQ2 = parseFloat(calculateQuartiles(blankG).q2);
+    const blankBQ2 = parseFloat(calculateQuartiles(blankB).q2);
+    const blankSum = blankRQ2 + blankGQ2 + blankBQ2;
+
+    // 樣品組 R、G、B 原始值的 Q2
+    const sampR = logRGBValues.map(e => parseFloat(e.color2.r)).filter(v => !isNaN(v));
+    const sampG = logRGBValues.map(e => parseFloat(e.color2.g)).filter(v => !isNaN(v));
+    const sampB = logRGBValues.map(e => parseFloat(e.color2.b)).filter(v => !isNaN(v));
+
+    const sampRQ2 = parseFloat(calculateQuartiles(sampR).q2);
+    const sampGQ2 = parseFloat(calculateQuartiles(sampG).q2);
+    const sampBQ2 = parseFloat(calculateQuartiles(sampB).q2);
+    const sampSum = sampRQ2 + sampGQ2 + sampBQ2;
+
+    const rgbRatio = (sampSum !== 0) ? blankSum / sampSum : 1;
+
+    const percentReduction = calculatePercentageReduction(b1Stats, b2Stats, rgbRatio);
     const percentResult = percentReduction.average;
 
     const errorCode = percentReduction.warning || "正常";
