@@ -1,8 +1,14 @@
-const circumference = 2 * Math.PI * 50; // r=50 for smaller circles
+const circumference = 2 * Math.PI * 50;
 
 const ratesRaw = localStorage.getItem("rates");
 const errorCode = localStorage.getItem("errorCode") || "正常";
 const grid = document.getElementById("samplesGrid");
+
+// ── Debug 顯示區 ──
+const debugDiv = document.createElement('div');
+debugDiv.style.cssText = 'background:#333;color:#0f0;font-size:11px;padding:8px;margin:8px;border-radius:6px;word-break:break-all;white-space:pre-wrap;';
+debugDiv.textContent = `rates: ${ratesRaw}\nerrorCode: ${errorCode}`;
+document.body.insertBefore(debugDiv, document.body.firstChild);
 
 function getLabel(percent) {
     if (percent <= 35) return { label: '合格', color: 'green' };
@@ -48,13 +54,13 @@ function createCard(index, rateStr) {
     card.appendChild(wrapper);
     card.appendChild(statusText);
 
-    // Parse and animate
-    let percent = parseFloat(rateStr);
+    const percent = parseFloat(rateStr);
+    const isNA = (rateStr === 'N/A' || rateStr === null || rateStr === undefined || isNaN(percent));
 
-    if (rateStr === null || rateStr === undefined || rateStr === 'N/A') {
-        percentText.textContent = '無資料';
+    if (isNA) {
+        percentText.textContent = 'N/A';
         fgCircle.style.stroke = '#ccc';
-        statusText.textContent = '未接收到資料';
+        statusText.textContent = '數據異常';
         statusText.style.color = '#999';
     } else if (percent < -10 || percent > 100) {
         percentText.textContent = '異常';
@@ -62,21 +68,21 @@ function createCard(index, rateStr) {
         statusText.textContent = '請檢查數據';
         statusText.style.color = '#999';
     } else {
-        if (percent < 0 && percent >= -10) percent = 0;
-        const { label, color } = getLabel(percent);
+        const displayPercent = percent < 0 ? 0 : percent;
+        const { label, color } = getLabel(displayPercent);
         fgCircle.style.stroke = color;
         statusText.textContent = label;
         statusText.style.color = color;
 
         let current = 0;
         const steps = 60;
-        const stepSize = percent / steps;
+        const stepSize = displayPercent / steps;
         const stepTime = 1000 / steps;
 
         const anim = setInterval(() => {
             current += stepSize;
-            if (current >= percent) {
-                current = percent;
+            if (current >= displayPercent) {
+                current = displayPercent;
                 clearInterval(anim);
             }
             const offset = circumference - (current / 100) * circumference;
@@ -99,7 +105,6 @@ if (!ratesRaw) {
         grid.appendChild(createCard(i, rate));
     });
 
-    // Show error codes if any
     if (errorCode && errorCode !== "正常") {
         const errDiv = document.createElement('div');
         errDiv.style.cssText = 'grid-column:span 2;text-align:center;color:#e63946;font-size:13px;font-weight:bold;padding:8px;background:#ffe0e0;border-radius:8px;margin-top:4px;';
