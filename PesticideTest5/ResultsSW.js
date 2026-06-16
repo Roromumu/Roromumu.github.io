@@ -4,12 +4,6 @@ const ratesRaw = localStorage.getItem("rates");
 const errorCode = localStorage.getItem("errorCode") || "正常";
 const grid = document.getElementById("samplesGrid");
 
-// ── Debug 顯示區 ──
-const debugDiv = document.createElement('div');
-debugDiv.style.cssText = 'background:#333;color:#0f0;font-size:11px;padding:8px;margin:8px;border-radius:6px;word-break:break-all;white-space:pre-wrap;';
-debugDiv.textContent = `rates: ${ratesRaw}\nerrorCode: ${errorCode}`;
-document.body.insertBefore(debugDiv, document.body.firstChild);
-
 function getLabel(percent) {
     if (percent <= 35) return { label: '合格', color: 'green' };
     if (percent <= 45) return { label: '有點危險', color: 'orange' };
