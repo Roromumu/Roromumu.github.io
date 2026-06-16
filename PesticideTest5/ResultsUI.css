@@ -1,0 +1,112 @@
+body {
+  margin: 0;
+  background: #fefcea;
+  font-family: "Segoe UI", sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  overflow: hidden;
+  height: 100vh;
+}
+
+.container {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.box {
+  background: #fff8dc;
+  border: 4px solid #333;
+  border-radius: 16px;
+  padding: 20px;
+  margin-top: 20px;
+  text-align: center;
+  box-shadow: 3px 3px 5px #ccc;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.circle-wrapper {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  margin: 0 auto;
+}
+
+svg {
+  transform: rotate(-90deg);
+  width: 100%;
+  height: 100%;
+}
+
+circle.bg {
+  fill: none;
+  stroke: #eee;
+  stroke-width: 12;
+}
+
+circle.fg {
+  fill: none;
+  stroke-width: 12;
+  stroke-linecap: round;
+  stroke-dasharray: 440;
+  stroke-dashoffset: 440;
+  transition: stroke-dashoffset 0.5s linear;
+}
+
+.percent-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.result-box {
+  background: #fff;
+  border: 4px solid #333;
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+}
+
+.result-box h2 {
+  margin: 0 0 10px;
+  font-size: 22px;
+}
+
+.status {
+  font-size: 28px;
+  font-weight: bold;
+  margin: 10px 0;
+}
+
+.buttons {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.buttons button {
+  flex: 1;
+  padding: 10px;
+  font-size: 14px;
+  border: 2px solid #444;
+  background: #f0f0f0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.buttons button:hover {
+  background: #e0e0e0;
+}
