@@ -329,7 +329,7 @@ function calculatePercentageReduction(b1Stats, b2Stats, rgbRatio = 1) {
          const n2 = parseFloat(qB2);
           if (n1 === 0) return { value: null, warning: null };
 
-         if (n1 < 0.05 || n2 < 0) return { value: null, warning: "ERROR:酵素活性不足" };
+         if (n1 < 0.05 || n2 < 0) return { value: null, warning: "警告:酵素活性不足" };
 
           if (n2 > n1) return { value: (1 - (n1 / n2) * rgbRatio) * 100, warning: "警告:A,B位置可能錯置" };
 
