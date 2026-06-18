@@ -125,9 +125,10 @@ html, body {
 .boxLabel {
     position: absolute;
     top: 125%;
-    left: -15px;
-    transform: translateY(-50%) rotate(-90deg);
-    transform-origin: left center;
+    right: -15px;
+    left: auto;
+    transform: translateY(-50%) rotate(90deg);
+    transform-origin: right center;
     font-size: 10px;
     color: yellow;
     background-color: rgba(100, 50, 100, 0.7);
