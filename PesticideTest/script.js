@@ -1,4 +1,4 @@
-const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbyv_uizvx2puwqLCBI2Nye7U9U6JREbm0fMg6mQ_1pEXT2vJ4Ht8OwfRHIHUxolIu1e0g/exec";
+const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbzjxUWuiQVYlDZ3zdM4An7Rby29H9PYvnxtd8J-SEnEyD6SmKGCl1XYJNDg2UhSxHFG4A/exec";
 
 async function uploadToGoogleSheets(data) {
     const url = GOOGLE_SHEET_URL + "?t=" + Date.now();
@@ -66,17 +66,22 @@ let redBoxPositions = {
     redBox2: { left: 0, top: 0 },
 };
 
-async function startCamera() {
+async function startCamera(deviceId = null) {
     video.setAttribute('playsinline', true);
     video.setAttribute('webkit-playsinline', true);
 
     try {
         const constraints = {
-            video: { facingMode: 'environment' }
+            video: deviceId
+                ? { deviceId: { exact: deviceId } }
+                : { facingMode: 'environment' }
         };
         
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
             throw new Error("瀏覽器不支持 getUserMedia");
+        }
+        if (stream) {
+            stream.getTracks().forEach(t => t.stop());
         }
         stream = await navigator.mediaDevices.getUserMedia(constraints);
         video.srcObject = stream;
@@ -303,6 +308,21 @@ function toggleTorch(on) {
 }
 
 startCamera();
+
+// 列出所有鏡頭
+navigator.mediaDevices.enumerateDevices().then(devices => {
+    const select = document.getElementById('cameraSelect');
+    const cameras = devices.filter(d => d.kind === 'videoinput');
+    select.innerHTML = cameras.map((cam, i) =>
+        `<option value="${cam.deviceId}">${cam.label || '鏡頭 ' + (i + 1)}</option>`
+    ).join('');
+});
+
+// 切換鏡頭
+document.getElementById('cameraSelect').addEventListener('change', function() {
+    if (this.value) startCamera(this.value);
+});
+
 makeDraggable(redBox1);
 makeDraggable(redBox2);
 
@@ -329,7 +349,7 @@ function calculatePercentageReduction(b1Stats, b2Stats, rgbRatio = 1) {
          const n2 = parseFloat(qB2);
           if (n1 === 0) return { value: null, warning: null };
 
-         if (n1 < 0.05 || n2 < 0) return { value: null, warning: "警告:酵素活性不足" };
+         if (n1 < 0.05 || n2 < -0.02) return { value: null, warning: "警告:酵素活性不足" };
 
           if (n2 > n1) return { value: (1 - (n1 / n2) * rgbRatio) * 100, warning: "警告:A,B位置可能錯置" };
 
