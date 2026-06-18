@@ -340,7 +340,7 @@ function calculatePercentageReduction(b1Stats, b2Stats, rgbRatio = 1) {
     const q2Result = safePercent(b1Stats.q2, b2Stats.q2);
 
     // 警告優先取 Q2 的
-    const warning = q2Result.warning || q1Result.warning || null;
+    const warning = q2Result.warning || null;
 
     const avg = (q1Result.value != null && q2Result.value != null)
         ? ((q1Result.value + q2Result.value) / 2).toFixed(2) + "%"
